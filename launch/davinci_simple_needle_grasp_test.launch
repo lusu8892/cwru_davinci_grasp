@@ -1,0 +1,7 @@
+<launch>
+
+    <node name="davinci_simple_needle_grasp_test_node" pkg="cwru_davinci_grasp" type="davinci_simple_needle_grasp_test_node" respawn="false" output="screen">
+        <rosparam command="load" file="$(find cwru_davinci_grasp)/config/dvrk_psm_grasp_needle_data.yaml"/>
+    </node>
+
+</launch>

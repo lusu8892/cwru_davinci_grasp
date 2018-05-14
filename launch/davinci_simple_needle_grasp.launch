@@ -1,0 +1,9 @@
+<launch>
+
+    <node name="davinci_needle_pose_publisher" pkg="cwru_davinci_grasp" type="davinci_needle_pose_publisher" respawn="false" output="screen"/>
+
+    <node name="davinci_simple_needle_grasper_main" pkg="cwru_davinci_grasp" type="davinci_simple_needle_grasper_main" args="psm_one needle_r --place" respawn="false" output="screen">
+        <rosparam command="load" file="$(find cwru_davinci_grasp)/config/dvrk_psm_grasp_needle_data.yaml"/>
+    </node>
+
+</launch>
