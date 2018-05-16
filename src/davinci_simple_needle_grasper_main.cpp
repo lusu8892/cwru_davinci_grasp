@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 {
   if (argc < 2)
   {
-    std::cerr << "Usage: " << argv[0] << "<which_arm> <needle-name> [--place]"
+    std::cerr << "Usage: " << argv[0] << "<which_arm> <needle_name> [place]"
               << std::endl;
     return 1;
   }
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
   if (argc > 3)
   {
     std::string arg = argv[3];
-    if (arg == "--place")
+    if (arg == "place")
     {
       ROS_INFO("Place %s", needle_name.c_str());
       is_place = true;
@@ -103,10 +103,7 @@ int main(int argc, char** argv)
 
   DavinciSimpleNeedleGrasper needleGrasper(node_handle,
                                            node_handle_priv,
-                                           which_arm,
-                                           "get_planning_scene",
-                                           "planning_scene",
-                                           "updated_needle_pose");
+                                           which_arm);
 
   if (!is_place)
   {
@@ -119,20 +116,30 @@ int main(int argc, char** argv)
       // defined needle pick up
       if(!needleGrasper.pickNeedle(needle_name, NeedlePickMode::DEFINED))
       {
-        ROS_INFO("Main function: failed to perform DEFINED needle pick up");
+        ROS_INFO("Main function: failed to perform DEFINED needle pick up, now try random needle pick up");
+        // try random needle pick up
+        if (!needleGrasper.pickNeedle(needle_name, NeedlePickMode::RANDOM))
+        {
+          ROS_INFO("Main function: failed to perform RANDOM needle pick up");
+          ros::shutdown();
+          return 0;
+        }
+        ROS_INFO("Main function: successfully performed RANDOM needle pick up");
         ros::shutdown();
         return 0;
       }
+      ROS_INFO("Main function: successfully performed DEFINED needle pick up");
     }
     else
     {
       // random needle pick up
-      if ( !needleGrasper.pickNeedle(needle_name, NeedlePickMode::RANDOM))
+      if (!needleGrasper.pickNeedle(needle_name, NeedlePickMode::RANDOM))
       {
         ROS_INFO("Main function: failed to perform RANDOM needle pick up");
         ros::shutdown();
         return 0;
       }
+      ROS_INFO("Main function: successfully performed RANDOM needle pick up");
     }
   }
   else
@@ -157,6 +164,7 @@ int main(int argc, char** argv)
       ros::shutdown();
       return 0;
     }
+    ROS_INFO("Main function: successfully placed needle to a new location");
   }
 
 

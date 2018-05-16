@@ -48,12 +48,12 @@ namespace cwru_davinci_grasp
 {
 
 DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
-    const ros::NodeHandle& nh,
-    const ros::NodeHandle& nh_priv,
-    const std::string& planning_group_name,
-    const std::string& get_planning_scene_service,
-    const std::string& set_planning_scene_topic,
-    const std::string& updated_needle_pose_topic)
+    const ros::NodeHandle &nh,
+    const ros::NodeHandle &nh_priv,
+    const std::string &planning_group_name,
+    const std::string &get_planning_scene_service,
+    const std::string &set_planning_scene_topic,
+    const std::string &updated_needle_pose_topic)
     : nh_(nh), nh_priv_(nh_priv)
 {
   ROS_INFO_STREAM_NAMED("DavinciSimpleNeedleGrasper","Starting Simpling Needle Grasping");

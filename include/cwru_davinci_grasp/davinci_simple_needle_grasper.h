@@ -84,9 +84,9 @@ public:
   DavinciSimpleNeedleGrasper(const ros::NodeHandle &nh,
                              const ros::NodeHandle &nh_priv,
                              const std::string &planning_group_name,
-                             const std::string &get_planning_scene_service,
-                             const std::string &set_planning_scene_topic,
-                             const std::string &updated_needle_pose_topic);
+                             const std::string &get_planning_scene_service = "get_planning_scene",
+                             const std::string &set_planning_scene_topic = "planning_scene",
+                             const std::string &updated_needle_pose_topic = "updated_needle_pose");
 
   ~DavinciSimpleNeedleGrasper();
 
