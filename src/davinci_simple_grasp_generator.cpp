@@ -59,6 +59,7 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
   const DavinciNeeldeGraspData &needleGraspData,
   std::vector<moveit_msgs::Grasp> &possible_grasps)
 {
+  possible_grasps.clear();
   // it's advisable to call initSingleton() before you need it for the first
   // time in a time-critical context.
   convenience_ros_functions::ROSFunctions::initSingleton();
