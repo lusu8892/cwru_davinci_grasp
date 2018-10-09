@@ -56,7 +56,7 @@ public:
   trajectory_msgs::JointTrajectory
       grasp_posture_; // when the end effector is in "close" position
 
-  std::string base_link_; // name of global frame ( with z axis pointing up)
+  std::string base_link_; // name of global frame ( with z axis pointing up), the value will be assigned by the value in MoveIt! package config/.srdf
   std::string ee_parent_link_; // the last link in the kinematic chain before
                                // the end effector
   std::string ee_tool_tip_link_;
