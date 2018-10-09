@@ -50,9 +50,15 @@
 namespace cwru_davinci_grasp
 {
 
-  /**
-   * helper functions to generator simple Grasp Message objects.
-   */
+struct GraspInfo
+{
+  moveit_msgs::Grasp grasp;
+  int part_id;
+};
+
+/**
+ * helper functions to generator simple Grasp Message objects.
+ */
 class DavinciSimpleGraspGenerator
 {
 public:
@@ -69,7 +75,7 @@ public:
    */
   bool generateSimpleNeedleGrasps(const geometry_msgs::PoseStamped &needle_pose,
                                   const DavinciNeeldeGraspData &needleGraspData,
-                                  std::vector<moveit_msgs::Grasp> &possible_grasps);
+                                  std::vector<GraspInfo> &possible_grasps);
 
   /**
    * @brief generate a simple needle grasp with user defined grasping parameters
@@ -80,7 +86,7 @@ public:
    */
   bool generateDefinedSimpleNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
                                         const DavinciNeeldeGraspData &needleGraspData,
-                                        moveit_msgs::Grasp &possible_grasp);
+                                        GraspInfo &possible_grasp);
 
 private:
 
@@ -103,7 +109,8 @@ private:
    * @return A 4-by-4 matrix represents desired needle pose wrt to gripper frame
    */
   Eigen::Affine3d calNeedleToGripperPose(const double (&grasping_parameters)[4],
-                                         const double &needle_radius);
+                                         const double &needle_radius,
+                                         GraspInfo& grasp_info);
 
 
   /**

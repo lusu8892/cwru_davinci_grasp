@@ -57,7 +57,7 @@ DavinciSimpleGraspGenerator::~DavinciSimpleGraspGenerator()
 bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
   const geometry_msgs::PoseStamped &needle_pose,
   const DavinciNeeldeGraspData &needleGraspData,
-  std::vector<moveit_msgs::Grasp> &possible_grasps)
+  std::vector<GraspInfo> &possible_grasps)
 {
   possible_grasps.clear();
   // it's advisable to call initSingleton() before you need it for the first
@@ -138,24 +138,24 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
                                                            << grasp_theta_3);
           double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
 
-          moveit_msgs::Grasp new_grasp;
+          GraspInfo new_grasp;
           // A name for this grasp
           static int grasp_id = 0;
-          new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
+          new_grasp.grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
           ++grasp_id;
 
           // PreGrasp and Grasp Postures --------------------------------------------------------------------------
 
           // The internal posture of the hand for the pre-grasp only positions are used
-          new_grasp.pre_grasp_posture = needleGraspData.pre_grasp_posture_;
+          new_grasp.grasp.pre_grasp_posture = needleGraspData.pre_grasp_posture_;
 
           // The internal posture of the hand for the grasp positions and efforts are used
-          new_grasp.grasp_posture = needleGraspData.grasp_posture_;
+          new_grasp.grasp.grasp_posture = needleGraspData.grasp_posture_;
 
           // Grasp ------------------------------------------------------------------------------------------------
 
           Eigen::Affine3d grasp_pose;  // needle wrt to gripper tool tip frame frame
-          grasp_pose = calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_);
+          grasp_pose = calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, new_grasp);
 
           if( verbose_ )
           {
@@ -169,12 +169,12 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
           tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose, grasp_pose_msg.pose);
 
           // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
-          new_grasp.grasp_pose = grasp_pose_msg;
+          new_grasp.grasp.grasp_pose = grasp_pose_msg;
 
           // Other ------------------------------------------------------------------------------------------------
 
           // the maximum contact force to use while grasping (<=0 to disable)
-          new_grasp.max_contact_force = 0;
+          new_grasp.grasp.max_contact_force = 0;
 
           // -------------------------------------------------------------------------------------------------------
           // -------------------------------------------------------------------------------------------------------
@@ -190,14 +190,14 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
           pre_grasp_approach.direction.vector.x = 0;
           pre_grasp_approach.direction.vector.y = 0;
           pre_grasp_approach.direction.vector.z = -1; // Approach direction (negative z axis)  // TODO: document this assumption
-          new_grasp.pre_grasp_approach = pre_grasp_approach;
+          new_grasp.grasp.pre_grasp_approach = pre_grasp_approach;
 
           // Retreat
           post_grasp_retreat.direction.header.frame_id = needleGraspData.base_link_;
           post_grasp_retreat.direction.vector.x = 0;
           post_grasp_retreat.direction.vector.y = 0;
           post_grasp_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
-          new_grasp.post_grasp_retreat = post_grasp_retreat;
+          new_grasp.grasp.post_grasp_retreat = post_grasp_retreat;
 
           // Add to vector
           possible_grasps.push_back(new_grasp);
@@ -212,7 +212,7 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 
 bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
                                                                    const DavinciNeeldeGraspData &needleGraspData,
-                                                                   moveit_msgs::Grasp &possible_grasp)
+                                                                   GraspInfo &possible_grasp)
 {
   // it's advisable to call initSingleton() before you need it for the first
   // time in a time-critical context.
@@ -272,24 +272,24 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
                                                    << grasp_theta_3);
   double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
 
-  moveit_msgs::Grasp new_grasp;
+  GraspInfo new_grasp;
   // A name for this grasp
   static int grasp_id = 0;
-  new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
+  new_grasp.grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
   ++grasp_id;
 
   // PreGrasp and Grasp Postures --------------------------------------------------------------------------
 
   // The internal posture of the hand for the pre-grasp only positions are used
-  new_grasp.pre_grasp_posture = needleGraspData.pre_grasp_posture_;
+  new_grasp.grasp.pre_grasp_posture = needleGraspData.pre_grasp_posture_;
 
   // The internal posture of the hand for the grasp positions and efforts are used
-  new_grasp.grasp_posture = needleGraspData.grasp_posture_;
+  new_grasp.grasp.grasp_posture = needleGraspData.grasp_posture_;
 
   // Grasp ------------------------------------------------------------------------------------------------
 
   Eigen::Affine3d grasp_pose;  // needle wrt to gripper tool tip frame frame
-  grasp_pose = calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_);
+  grasp_pose = calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, new_grasp);
 
   if (verbose_)
   {
@@ -303,12 +303,12 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
   tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * (grasp_pose.inverse()), grasp_pose_msg.pose);
 
   // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
-  new_grasp.grasp_pose = grasp_pose_msg;
+  new_grasp.grasp.grasp_pose = grasp_pose_msg;
 
   // Other ------------------------------------------------------------------------------------------------
 
   // the maximum contact force to use while grasping (<=0 to disable)
-  new_grasp.max_contact_force = 0;
+  new_grasp.grasp.max_contact_force = 0;
 
   // -------------------------------------------------------------------------------------------------------
   // -------------------------------------------------------------------------------------------------------
@@ -324,14 +324,14 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
   pre_grasp_approach.direction.vector.x = 0;
   pre_grasp_approach.direction.vector.y = 0;
   pre_grasp_approach.direction.vector.z = -1; // Approach direction (negative z axis)  // TODO: document this assumption
-  new_grasp.pre_grasp_approach = pre_grasp_approach;
+  new_grasp.grasp.pre_grasp_approach = pre_grasp_approach;
 
   // Retreat
   post_grasp_retreat.direction.header.frame_id = needleGraspData.base_link_;
   post_grasp_retreat.direction.vector.x = 0;
   post_grasp_retreat.direction.vector.y = 0;
   post_grasp_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
-  new_grasp.post_grasp_retreat = post_grasp_retreat;
+  new_grasp.grasp.post_grasp_retreat = post_grasp_retreat;
 
   // Add to vector
   possible_grasp = new_grasp;
@@ -339,12 +339,26 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
 }
 
 Eigen::Affine3d DavinciSimpleGraspGenerator::calNeedleToGripperPose(const double (&grasping_parameters)[4],
-                                                                    const double &needle_radius)
+                                                                    const double &needle_radius,
+                                                                    GraspInfo& grasp_info)
 {
   double theta_0 = grasping_parameters[0];
   double theta_1 = grasping_parameters[1];
   double theta_2 = grasping_parameters[2];
   double theta_3 = grasping_parameters[3];
+
+  if (theta_3 > 0 && theta_3 <= 1.0472)
+  {
+    grasp_info.part_id = 0;
+  }
+  else if(theta_3 > 1.0472 && theta_3 <= 2.0944)
+  {
+    grasp_info.part_id = 1;
+  }
+  else if(theta_3 > 2.0944 && theta_3 < 3.1415)
+  {
+    grasp_info.part_id = 2;
+  }
 
   Eigen::Affine3d desired_needle_to_gripper_pose;
 

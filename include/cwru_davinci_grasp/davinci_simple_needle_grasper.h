@@ -63,12 +63,12 @@
 namespace cwru_davinci_grasp
 {
 
-struct NeedleModel
-{
-  std::string name;
-  geometry_msgs::Pose start_pose;
-  geometry_msgs::Pose goal_pose;
-};
+//struct NeedleModel
+//{
+//  std::string name;
+//  geometry_msgs::Pose start_pose;
+//  geometry_msgs::Pose goal_pose;
+//};
 
 //  scoped enum definition for user to choose needle pick mode
 enum class NeedlePickMode { RANDOM, DEFINED };
@@ -117,25 +117,34 @@ public:
    * @return
    */
   bool placeNeedle(const geometry_msgs::Pose &needle_goal_pose,
-                         const std::string &needle_name);
+                   const std::string &needle_name);
 
   /**
    * @brief get all possible needle grasps messages
    * @param needle_pose
-   * @param needleGraspData
    * @return
    */
-  std::vector<moveit_msgs::Grasp> getAllPossibleNeedleGrasps(const geometry_msgs::PoseStamped &needle_pose,
-                                                             const DavinciNeeldeGraspData &needleGraspData);
+  std::vector<moveit_msgs::Grasp> getAllPossibleNeedleGraspsList() const;
+
+  std::vector<GraspInfo> getAllPossibleNeedleGrasps() const;
+
+//  /**
+//   * @brief get the defind needle grasp message
+//   * @return
+//   */
+//  moveit_msgs::Grasp getDefinedNeedleGrasp();
 
   /**
-   * @brief get the defind needle grasp message
-   * @param needle_pose
-   * @param needleGraspData
+   * @brief get the defined needle GraspInfo
    * @return
    */
-  moveit_msgs::Grasp getDefinedNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
-                                           const DavinciNeeldeGraspData &needleGraspData);
+  GraspInfo getDefinedNeedleGrasp();
+
+  /**
+   * @brief return needle pose
+   * @return
+   */
+  geometry_msgs::PoseStamped getNeedlePose() const;
 
 private:
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
@@ -154,6 +163,7 @@ private:
   ros::Subscriber needle_pose_sub_;
 
   geometry_msgs::PoseStamped needle_pose_;
+  geometry_msgs::PoseStamped grasped_needle_pose_;
 
   moveit_msgs::CollisionObject needle_collision_model_;
 
@@ -172,9 +182,11 @@ private:
 
   DavinciSimpleGraspGeneratorPtr simpleNeedleGraspGenerator_;
 
-  std::vector<moveit_msgs::Grasp> possible_grasps_;
+  std::vector<GraspInfo> possible_grasps_;
 
-  moveit_msgs::Grasp defined_grasp_;
+  std::vector<moveit_msgs::Grasp> possible_grasps_list_;
+
+  GraspInfo defined_grasp_;
 
 
   /**
@@ -184,7 +196,8 @@ private:
    * @return
    */
   moveit_msgs::MoveItErrorCodes randomPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                 const std::string &needle_name);
+                                                 const std::string &needle_name,
+                                                 std::vector<GraspInfo> &possible_grasps);
 
   /**
    * @brief pick up needle by user defined grasping parameter
@@ -193,7 +206,8 @@ private:
    * @return
    */
   moveit_msgs::MoveItErrorCodes definedPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                  const std::string &needle_name);
+                                                  const std::string &needle_name,
+                                                  GraspInfo& defined_grasp);
 
   /**
    * @brief helper function to place needle
