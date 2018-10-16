@@ -166,7 +166,7 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 
           // ------------------------------------------------------------------------
           // Convert pose to global frame (base_link)
-          tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * (grasp_pose.inverse()), grasp_pose_msg.pose);
+          tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.inverse(), grasp_pose_msg.pose);
 
           // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
           new_grasp.grasp.grasp_pose = grasp_pose_msg;
@@ -300,7 +300,7 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
 
   // ------------------------------------------------------------------------
   // Convert pose to global frame (base_link)
-  tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * (grasp_pose.inverse()), grasp_pose_msg.pose);
+  tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.inverse(), grasp_pose_msg.pose);
 
   // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
   new_grasp.grasp.grasp_pose = grasp_pose_msg;
