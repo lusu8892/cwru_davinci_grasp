@@ -112,6 +112,7 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 //  double grasp_theta_2;
 //  double grasp_theta_3;
 
+  static int grasp_id = 0;
   for(int i = 0; i < needleGraspData.grasp_theta_0_list_.size(); i++)
   {
     //  inside first loop
@@ -132,15 +133,15 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
           //  inside fourth loop
           double grasp_theta_3 = needleGraspData.grasp_theta_3_list_[l];
 
-          ROS_INFO_STREAM("All four grasping parameters: " << grasp_theta_0 << " "
-                                                           << grasp_theta_1 << " "
-                                                           << grasp_theta_2 << " "
-                                                           << grasp_theta_3);
+//          ROS_INFO_STREAM("All four grasping parameters: " << grasp_theta_0 << " "
+//                                                           << grasp_theta_1 << " "
+//                                                           << grasp_theta_2 << " "
+//                                                           << grasp_theta_3);
           double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
 
           GraspInfo new_grasp;
           // A name for this grasp
-          static int grasp_id = 0;
+//          static int grasp_id = 0;
           new_grasp.grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
           ++grasp_id;
 
@@ -266,10 +267,10 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
   double grasp_theta_2 = needleGraspData.grasp_theta_2_;
   double grasp_theta_3 = needleGraspData.grasp_theta_3_;
 
-  ROS_INFO_STREAM("All four grasping parameters: " << grasp_theta_0 << " "
-                                                   << grasp_theta_1 << " "
-                                                   << grasp_theta_2 << " "
-                                                   << grasp_theta_3);
+//  ROS_INFO_STREAM("All four grasping parameters: " << grasp_theta_0 << " "
+//                                                   << grasp_theta_1 << " "
+//                                                   << grasp_theta_2 << " "
+//                                                   << grasp_theta_3);
   double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
 
   GraspInfo new_grasp;

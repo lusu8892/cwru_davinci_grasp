@@ -41,8 +41,7 @@
 namespace cwru_davinci_grasp
 {
 DavinciNeeldeGraspData::DavinciNeeldeGraspData()
-  : base_link_("/base_link"), angle_resolution_(16),
-    approach_retreat_desired_dist_(0.008), approach_retreat_min_dist_(0.005)
+  : base_link_("/base_link")
 {
   // left blank
 }
@@ -76,6 +75,18 @@ bool DavinciNeeldeGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
     return false;
   }
   nh.getParam("base_link", base_link_);
+
+  if (!nh.hasParam("needle_radius"))
+  {
+    ROS_ERROR_STREAM_NAMED("grasp_data_loader",
+                           "Grasp configuration parameter `needle_radius` missing "
+                             "from rosparam server. "
+                             "Did you load your end effector's configuration "
+                             "yaml file? Searching in namespace: "
+                             << nh.getNamespace());
+    return false;
+  }
+  nh.getParam("needle_radius", needle_radius_);
 
   // Search within the sub-namespace of this end effector name
   ros::NodeHandle child_nh(nh, end_effector);
@@ -139,6 +150,43 @@ bool DavinciNeeldeGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
     return false;
   }
   child_nh.getParam("end_effector_tool_tip_link", end_effector_tool_tip_link);
+
+  // Load a param
+  if (!child_nh.hasParam("approach_retreat_desired_dist"))
+  {
+    ROS_ERROR_STREAM_NAMED("grasp_data_loader",
+                           "Grasp configuration parameter "
+                             "`approach_retreat_desired_dist` missing from rosparam "
+                             "server. Did you load your end effector's "
+                             "configuration yaml file?");
+    return false;
+  }
+  child_nh.getParam("approach_retreat_desired_dist", approach_retreat_desired_dist_);
+
+  // Load a param
+  if (!child_nh.hasParam("approach_retreat_min_dist"))
+  {
+    ROS_ERROR_STREAM_NAMED("grasp_data_loader",
+                           "Grasp configuration parameter "
+                             "`approach_retreat_min_dist` missing from rosparam "
+                             "server. Did you load your end effector's "
+                             "configuration yaml file?");
+    return false;
+  }
+  child_nh.getParam("approach_retreat_min_dist", approach_retreat_min_dist_);
+
+
+  // Load a param
+  if (!child_nh.hasParam("angle_resolution"))
+  {
+    ROS_ERROR_STREAM_NAMED("grasp_data_loader",
+                           "Grasp configuration parameter "
+                             "`angle_resolution` missing from rosparam "
+                             "server. Did you load your end effector's "
+                             "configuration yaml file?");
+    return false;
+  }
+  child_nh.getParam("angle_resolution", angle_resolution_);
 
   // Load a param
   if (!child_nh.hasParam("joints"))
@@ -224,8 +272,6 @@ bool DavinciNeeldeGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
     theta_resolution.push_back(static_cast<double>(theta_resolution_list[i]));
   }
 
-
-
   // -------------------------------
   // Create pre-grasp posture if specified
   if (!pre_grasp_posture.empty())
@@ -261,8 +307,8 @@ bool DavinciNeeldeGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
 
   // -------------------------------
   // Nums
-  approach_retreat_desired_dist_ = 0.01; // 0.3;
-  approach_retreat_min_dist_ = 0.005;
+  //  approach_retreat_desired_dist_ = 0.01; // 0.3;
+  //  approach_retreat_min_dist_ = 0.005;
 
   // TODO this grasp_depth_ variable may not be needed.
   //  // distance from center point of object to end effector
@@ -270,7 +316,7 @@ bool DavinciNeeldeGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
   //  side of the object! (like from below)
 
   // generate grasps at PI/angle_resolution increments
-  angle_resolution_ = 16; // TODO parametrize this, or move to action interface
+  //  angle_resolution_ = 16; // TODO parametrize this, or move to action interface
 
   grasp_theta_0_ = theta_normal_list[0];
   grasp_theta_1_ = theta_normal_list[1];
@@ -291,7 +337,7 @@ bool DavinciNeeldeGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
   grasp_theta_3_min_ = theta_limits_list[6];
   grasp_theta_3_max_ = theta_limits_list[7];
 
-  needle_radius_ = 0.012;
+  //  needle_radius_ = 0.012;
   fillDataInGraspingParametersList();
   // Debug
   // moveit_simple_grasps::SimpleGrasps::printObjectGraspData(grasp_data);

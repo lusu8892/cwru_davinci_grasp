@@ -1,5 +1,7 @@
 base_link: 'world'  #this can be changed to any global reference frame
 
+needle_radius : 0.012
+
 # =====================================================
 psm_one_gripper:
     end_effector_name: 'psm_one_gripper'  #ee group name
@@ -26,8 +28,14 @@ psm_one_gripper:
     theta_limits : [0.0, 0.005, -1.5708, 1.5708, 0.0, 6.283, 0.0, 3.1415]
 
     #possible needle grasping search resolution
-    theta_resolution : [0.001, 0.2094, 0.2094, 0.2094]
+    theta_resolution : [0.001, 0.4188 ,0.4188, 0.2094]
     #theta_resolution : [0.001, 0.2094, 0.1047, 0.2094]
+
+    approach_retreat_desired_dist : 0.008
+
+    approach_retreat_min_dist : 0.005
+
+    angle_resolution : 16
 
 # =====================================================
 psm_two_gripper:
@@ -58,3 +66,8 @@ psm_two_gripper:
     theta_resolution : [0.001, 0.2094, 0.2094, 0.2094]
     #theta_resolution : [0.001, 0.2094, 0.1047, 0.2094]
 
+    approach_retreat_desired_dist : 0.008
+
+    approach_retreat_min_dist : 0.005
+
+    angle_resolution : 16

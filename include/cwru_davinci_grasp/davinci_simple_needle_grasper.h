@@ -188,6 +188,7 @@ private:
 
   GraspInfo defined_grasp_;
 
+  bool fresh_needle_pose_;
 
   /**
    * @brief pick up needle by using possible grasping poses list
@@ -261,6 +262,35 @@ private:
    * @param needle_pose
    */
   void needlePoseCallBack(const geometry_msgs::PoseStamped& needle_pose);
+
+  /**
+   * @brief update needle pose received from callback function
+   */
+  void updateNeedlePose();
+
+  /**
+   * @brief Update needle's collision model in the planning scene
+   * @return
+   */
+  bool updateNeedleModel(const std::string &needle_name);
+
+  /**
+   * @brief Check if object is being attached by planning group
+   * @param name
+   * @param attachedObjsCheckMap
+   * @return
+   */
+  bool hasObject(const std::string &name,
+                 const AttachedObjsCheckMap &attachedObjsCheckMap);
+
+  /**
+   * @brief Check if object is in the current planning scene
+   * @param name
+   * @param objsCheckMap
+   * @return
+   */
+  bool hasObject(const std::string &name,
+                 const ObjsCheckMap &objsCheckMap);
 };
 
 }
