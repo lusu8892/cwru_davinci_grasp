@@ -153,7 +153,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(
     case NeedlePickMode::RANDOM:
     {
       ROS_INFO("Robot is going to grasp needle with random grasping parameters");
-      moveit_msgs::MoveItErrorCodes error_code = randomPickNeedle(needle_pose, needle_name, possible_grasps_);
+      moveit_msgs::MoveItErrorCodes error_code = randomPickNeedle(needle_pose, needle_name, possible_grasps_msgs_);
       if (error_code.val == error_code.SUCCESS)
       {
 //        if (!davinciNeedleHandler_ -> attachObjectToRobot(needle_name, needleGraspData_.ee_tool_tip_link_))
@@ -176,7 +176,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(
     case NeedlePickMode::DEFINED:
     {
       ROS_INFO("Robot is going to grasp needle with user defined grasping parameters");
-      moveit_msgs::MoveItErrorCodes error_code = definedPickNeedle(needle_pose, needle_name, defined_grasp_);
+      moveit_msgs::MoveItErrorCodes error_code = definedPickNeedle(needle_pose, needle_name, defined_grasp_msg_);
       if (error_code.val == error_code.SUCCESS)
       {
 //        if (!davinciNeedleHandler_ -> attachObjectToRobot(needle_name, needleGraspData_.ee_tool_tip_link_))
@@ -220,7 +220,7 @@ bool DavinciSimpleNeedleGrasper::placeNeedle(const geometry_msgs::Pose &needle_g
 
 std::vector<moveit_msgs::Grasp> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGraspsList() const
 {
-  return possible_grasps_list_;
+  return possible_grasps_msgs_;
 }
 
 std::vector<GraspInfo> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGrasps() const
@@ -233,10 +233,10 @@ std::vector<GraspInfo> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGrasps() 
 //  return defined_grasp_.grasp;
 //}
 
-GraspInfo DavinciSimpleNeedleGrasper::getDefinedNeedleGrasp()
-{
-  return defined_grasp_;
-}
+//GraspInfo DavinciSimpleNeedleGrasper::getDefinedNeedleGrasp()
+//{
+//  return defined_grasp_;
+//}
 
 
 geometry_msgs::PoseStamped DavinciSimpleNeedleGrasper::getNeedlePose() const
@@ -353,14 +353,15 @@ bool DavinciSimpleNeedleGrasper::removeNeedleFromPlanningScene(const std::string
 }
 
 
-moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::randomPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                                           const std::string &needle_name,
-                                                                           std::vector<GraspInfo>& possible_grasps)
+moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::randomPickNeedle(
+  const geometry_msgs::PoseStamped &needle_pose,
+  const std::string &needle_name,
+  std::vector<moveit_msgs::Grasp> &possible_grasp_msgs)
 {
-  possible_grasps.clear();
+  possible_grasp_msgs.clear();
   // std::vector<moveit_msgs::Grasp> possible_grasps;
   // Pick grasp
-  simpleNeedleGraspGenerator_->generateSimpleNeedleGrasps(needle_pose, needleGraspData_, possible_grasps);
+  simpleNeedleGraspGenerator_->generateSimpleNeedleGrasps(needle_pose, needleGraspData_, possible_grasp_msgs);
 
   needleGraspData_.print();
   // Visualize them
@@ -382,27 +383,28 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::randomPickNeedle(const
     allowed_touch_objects.push_back(needle_name);
 
     // Add this list to all grasps
-    for (std::size_t i = 0; i < possible_grasps.size(); ++i)
+    for (std::size_t i = 0; i < possible_grasp_msgs.size(); ++i)
     {
-      possible_grasps[i].grasp.allowed_touch_objects = allowed_touch_objects;
+      possible_grasp_msgs[i].allowed_touch_objects = allowed_touch_objects;
     }
   }
 
-  possible_grasps_list_.clear();
-  for (int i = 0; i < possible_grasps.size(); i++)
-    possible_grasps_list_.push_back(possible_grasps[i].grasp);
+//  possible_grasps_msgs_.clear();
+//  for (int i = 0; i < possible_grasps.size(); i++)
+//    possible_grasps_msgs_.push_back(possible_grasps[i]);
 
   //ROS_INFO_STREAM_NAMED("","Grasp 0\n" << possible_grasps[0]);
-  return move_group_->pick(needle_name, possible_grasps_list_);
+  return move_group_->pick(needle_name, possible_grasp_msgs);
 }
 
-moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::definedPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                                            const std::string &needle_name,
-                                                                            GraspInfo& defined_grasp)
+moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::definedPickNeedle(
+  const geometry_msgs::PoseStamped &needle_pose,
+  const std::string &needle_name,
+  moveit_msgs::Grasp &defined_grasp_msgs)
 {
   // moveit_msgs::Grasp defined_grasp;
   // Pick grasp
-  simpleNeedleGraspGenerator_->generateDefinedSimpleNeedleGrasp(needle_pose, needleGraspData_, defined_grasp);
+  simpleNeedleGraspGenerator_->generateDefinedSimpleNeedleGrasp(needle_pose, needleGraspData_, defined_grasp_msgs);
 
   needleGraspData_.print();
   // Visualize them
@@ -424,11 +426,11 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::definedPickNeedle(cons
     allowed_touch_objects.push_back(needle_name);
 
     // Add this list to all grasps
-    defined_grasp.grasp.allowed_touch_objects = allowed_touch_objects;
+    defined_grasp_msgs.allowed_touch_objects = allowed_touch_objects;
   }
 
   //ROS_INFO_STREAM_NAMED("","Grasp 0\n" << possible_grasps[0]);
-  return move_group_->pick(needle_name, defined_grasp.grasp);
+  return move_group_->pick(needle_name, defined_grasp_msgs);
 }
 
 moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::placeNeedleHelper(

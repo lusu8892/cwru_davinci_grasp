@@ -92,6 +92,14 @@ public:
   ~DavinciSimpleNeedleGrasper();
 
   /**
+   *
+   * @return
+   */
+  bool pickNeedle(const std::string &needle_name,
+                  const geometry_msgs::PoseStamped &needle_pose,
+                  const Eigen::Affine3d &grasp_pose);
+
+  /**
    * @brief pick needle by using member variable @var needle_pose_
    * @param needle_name
    * @param mode
@@ -184,11 +192,11 @@ private:
 
   std::vector<GraspInfo> possible_grasps_;
 
-  std::vector<moveit_msgs::Grasp> possible_grasps_list_;
+  std::vector<moveit_msgs::Grasp> possible_grasps_msgs_;
 
-  GraspInfo defined_grasp_;
+  moveit_msgs::Grasp defined_grasp_msg_;
 
-  bool fresh_needle_pose_;
+  bool fresh_needle_pose_ = false;
 
   /**
    * @brief pick up needle by using possible grasping poses list
@@ -198,7 +206,7 @@ private:
    */
   moveit_msgs::MoveItErrorCodes randomPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
                                                  const std::string &needle_name,
-                                                 std::vector<GraspInfo> &possible_grasps);
+                                                 std::vector<moveit_msgs::Grasp> &possible_grasp_msgs);
 
   /**
    * @brief pick up needle by user defined grasping parameter
@@ -208,7 +216,7 @@ private:
    */
   moveit_msgs::MoveItErrorCodes definedPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
                                                   const std::string &needle_name,
-                                                  GraspInfo& defined_grasp);
+                                                  moveit_msgs::Grasp &defined_grasp_msgs);
 
   /**
    * @brief helper function to place needle

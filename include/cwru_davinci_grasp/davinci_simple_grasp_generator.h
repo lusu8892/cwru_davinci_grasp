@@ -52,7 +52,7 @@ namespace cwru_davinci_grasp
 
 struct GraspInfo
 {
-  moveit_msgs::Grasp grasp;
+  Eigen::Affine3d grasp_pose;
   int part_id;
 };
 
@@ -70,12 +70,14 @@ public:
    * @brief generate simple possible needle grasps list
    * @param needle_pose
    * @param needleGraspData
-   * @param possible_grasps
+   * @param possible_grasp_msgs
    * @return
    */
   bool generateSimpleNeedleGrasps(const geometry_msgs::PoseStamped &needle_pose,
                                   const DavinciNeeldeGraspData &needleGraspData,
-                                  std::vector<GraspInfo> &possible_grasps);
+                                  std::vector<moveit_msgs::Grasp> &possible_grasp_msgs);
+
+
 
   /**
    * @brief generate a simple needle grasp with user defined grasping parameters
@@ -86,8 +88,11 @@ public:
    */
   bool generateDefinedSimpleNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
                                         const DavinciNeeldeGraspData &needleGraspData,
-                                        GraspInfo &possible_grasp);
+                                        moveit_msgs::Grasp &possible_grasp_msg);
 
+  void graspGeneratorHelper(const geometry_msgs::PoseStamped &needle_pose,
+                            const DavinciNeeldeGraspData &needleGraspData,
+                            std::vector<GraspInfo> &grasp_pose);
 private:
 
   // class for publishing stuff to rviz
@@ -108,9 +113,9 @@ private:
    * @param needle_geometry_parameters
    * @return A 4-by-4 matrix represents desired needle pose wrt to gripper frame
    */
-  Eigen::Affine3d calNeedleToGripperPose(const double (&grasping_parameters)[4],
-                                         const double &needle_radius,
-                                         GraspInfo& grasp_info);
+  void calNeedleToGripperPose(const double (&grasping_parameters)[4],
+                              const double &needle_radius,
+                              GraspInfo &grasp_info);
 
 
   /**

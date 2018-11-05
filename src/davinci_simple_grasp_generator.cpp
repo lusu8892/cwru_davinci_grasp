@@ -57,9 +57,9 @@ DavinciSimpleGraspGenerator::~DavinciSimpleGraspGenerator()
 bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
   const geometry_msgs::PoseStamped &needle_pose,
   const DavinciNeeldeGraspData &needleGraspData,
-  std::vector<GraspInfo> &possible_grasps)
+  std::vector<moveit_msgs::Grasp> &possible_grasp_msgs)
 {
-  possible_grasps.clear();
+  possible_grasp_msgs.clear();
   // it's advisable to call initSingleton() before you need it for the first
   // time in a time-critical context.
   convenience_ros_functions::ROSFunctions::initSingleton();
@@ -107,113 +107,79 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
   grasp_pose_msg.header.stamp = ros::Time::now();
   grasp_pose_msg.header.frame_id = needleGraspData.base_link_;
 
-//  double grasp_theta_0;
-//  double grasp_theta_1;
-//  double grasp_theta_2;
-//  double grasp_theta_3;
 
-  static int grasp_id = 0;
-  for(int i = 0; i < needleGraspData.grasp_theta_0_list_.size(); i++)
+  std::vector<GraspInfo> grasp_poses;
+  graspGeneratorHelper(needle_pose, needleGraspData, grasp_poses);
+  int grasp_id = 0;
+  for(const GraspInfo &grasp_pose : grasp_poses)
   {
-    //  inside first loop
-    double grasp_theta_0 = needleGraspData.grasp_theta_0_list_[i];
+    moveit_msgs::Grasp new_grasp;
 
-    for (int j = 0; j < needleGraspData.grasp_theta_1_list_.size(); j++)
+    new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
+    ++grasp_id;
+
+    // PreGrasp and Grasp Postures --------------------------------------------------------------------------
+
+    // The internal posture of the hand for the pre-grasp only positions are used
+    new_grasp.pre_grasp_posture = needleGraspData.pre_grasp_posture_;
+
+    // The internal posture of the hand for the grasp positions and efforts are used
+    new_grasp.grasp_posture = needleGraspData.grasp_posture_;
+
+    if (verbose_)
     {
-      //  inside second loop
-      double grasp_theta_1 = needleGraspData.grasp_theta_1_list_[j];
-
-      for (int k = 0; k < needleGraspData.grasp_theta_2_list_.size(); k++)
-      {
-        //  inside third loop
-        double grasp_theta_2 = needleGraspData.grasp_theta_2_list_[k];
-
-        for (int l = 0; l < needleGraspData.grasp_theta_3_list_.size(); l++)
-        {
-          //  inside fourth loop
-          double grasp_theta_3 = needleGraspData.grasp_theta_3_list_[l];
-
-//          ROS_INFO_STREAM("All four grasping parameters: " << grasp_theta_0 << " "
-//                                                           << grasp_theta_1 << " "
-//                                                           << grasp_theta_2 << " "
-//                                                           << grasp_theta_3);
-          double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
-
-          GraspInfo new_grasp;
-          // A name for this grasp
-//          static int grasp_id = 0;
-          new_grasp.grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
-          ++grasp_id;
-
-          // PreGrasp and Grasp Postures --------------------------------------------------------------------------
-
-          // The internal posture of the hand for the pre-grasp only positions are used
-          new_grasp.grasp.pre_grasp_posture = needleGraspData.pre_grasp_posture_;
-
-          // The internal posture of the hand for the grasp positions and efforts are used
-          new_grasp.grasp.grasp_posture = needleGraspData.grasp_posture_;
-
-          // Grasp ------------------------------------------------------------------------------------------------
-
-          Eigen::Affine3d grasp_pose;  // needle wrt to gripper tool tip frame frame
-          grasp_pose = calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, new_grasp);
-
-          if( verbose_ )
-          {
-            // Convert pose to global frame (base_link)
-            tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.inverse(), grasp_pose_msg.pose);
-            visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
-          }
-
-          // ------------------------------------------------------------------------
-          // Convert pose to global frame (base_link)
-          tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.inverse(), grasp_pose_msg.pose);
-
-          // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
-          new_grasp.grasp.grasp_pose = grasp_pose_msg;
-
-          // Other ------------------------------------------------------------------------------------------------
-
-          // the maximum contact force to use while grasping (<=0 to disable)
-          new_grasp.grasp.max_contact_force = 0;
-
-          // -------------------------------------------------------------------------------------------------------
-          // -------------------------------------------------------------------------------------------------------
-          // Approach and retreat
-          // -------------------------------------------------------------------------------------------------------
-          // -------------------------------------------------------------------------------------------------------
-
-          // Straight down ---------------------------------------------------------------------------------------
-          // With respect to the base link/world frame
-
-          // Approach
-          pre_grasp_approach.direction.header.frame_id = needleGraspData.base_link_;
-          pre_grasp_approach.direction.vector.x = 0;
-          pre_grasp_approach.direction.vector.y = 0;
-          pre_grasp_approach.direction.vector.z = -1; // Approach direction (negative z axis)  // TODO: document this assumption
-          new_grasp.grasp.pre_grasp_approach = pre_grasp_approach;
-
-          // Retreat
-          post_grasp_retreat.direction.header.frame_id = needleGraspData.base_link_;
-          post_grasp_retreat.direction.vector.x = 0;
-          post_grasp_retreat.direction.vector.y = 0;
-          post_grasp_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
-          new_grasp.grasp.post_grasp_retreat = post_grasp_retreat;
-
-          // Add to vector
-          possible_grasps.push_back(new_grasp);
-        }
-      }
+      // Convert pose to global frame (base_link)
+      tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.grasp_pose.inverse(), grasp_pose_msg.pose);
+      visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
     }
+
+    // ------------------------------------------------------------------------
+    // Convert pose to global frame (base_link)
+    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.grasp_pose.inverse(), grasp_pose_msg.pose);
+
+    // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
+    new_grasp.grasp_pose = grasp_pose_msg;
+
+    // Other ------------------------------------------------------------------------------------------------
+
+    // the maximum contact force to use while grasping (<=0 to disable)
+    new_grasp.max_contact_force = 0;
+
+    // -------------------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------------------
+    // Approach and retreat
+    // -------------------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------------------
+
+    // Straight down ---------------------------------------------------------------------------------------
+    // With respect to the base link/world frame
+
+    // Approach
+    pre_grasp_approach.direction.header.frame_id = needleGraspData.base_link_;
+    pre_grasp_approach.direction.vector.x = 0;
+    pre_grasp_approach.direction.vector.y = 0;
+    pre_grasp_approach.direction.vector.z = -1; // Approach direction (negative z axis)  // TODO: document this assumption
+    new_grasp.pre_grasp_approach = pre_grasp_approach;
+
+    // Retreat
+    post_grasp_retreat.direction.header.frame_id = needleGraspData.base_link_;
+    post_grasp_retreat.direction.vector.x = 0;
+    post_grasp_retreat.direction.vector.y = 0;
+    post_grasp_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
+    new_grasp.post_grasp_retreat = post_grasp_retreat;
+
+    // Add to vector
+    possible_grasp_msgs.push_back(new_grasp);
   }
-  ROS_INFO_STREAM_NAMED("grasp", "Generated " << possible_grasps.size() << " grasps." );
+
+  ROS_INFO_STREAM_NAMED("grasp", "Generated " << possible_grasp_msgs.size() << " grasps.");
   return true;
 }
 
 
 bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
                                                                    const DavinciNeeldeGraspData &needleGraspData,
-                                                                   GraspInfo &possible_grasp)
+                                                                   moveit_msgs::Grasp &possible_grasp_msg)
 {
   // it's advisable to call initSingleton() before you need it for the first
   // time in a time-critical context.
@@ -267,49 +233,44 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
   double grasp_theta_2 = needleGraspData.grasp_theta_2_;
   double grasp_theta_3 = needleGraspData.grasp_theta_3_;
 
-//  ROS_INFO_STREAM("All four grasping parameters: " << grasp_theta_0 << " "
-//                                                   << grasp_theta_1 << " "
-//                                                   << grasp_theta_2 << " "
-//                                                   << grasp_theta_3);
   double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
 
-  GraspInfo new_grasp;
+  GraspInfo grasp_pose;
+  calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, grasp_pose);
+
+  moveit_msgs::Grasp new_grasp;
   // A name for this grasp
-  static int grasp_id = 0;
-  new_grasp.grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
+  int grasp_id = 0;
+  new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
   ++grasp_id;
 
   // PreGrasp and Grasp Postures --------------------------------------------------------------------------
 
   // The internal posture of the hand for the pre-grasp only positions are used
-  new_grasp.grasp.pre_grasp_posture = needleGraspData.pre_grasp_posture_;
+  new_grasp.pre_grasp_posture = needleGraspData.pre_grasp_posture_;
 
   // The internal posture of the hand for the grasp positions and efforts are used
-  new_grasp.grasp.grasp_posture = needleGraspData.grasp_posture_;
+  new_grasp.grasp_posture = needleGraspData.grasp_posture_;
 
   // Grasp ------------------------------------------------------------------------------------------------
-
-  Eigen::Affine3d grasp_pose;  // needle wrt to gripper tool tip frame frame
-  grasp_pose = calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, new_grasp);
-
   if (verbose_)
   {
     // Convert pose to global frame (base_link)
-    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.inverse(), grasp_pose_msg.pose);
+    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.grasp_pose.inverse(), grasp_pose_msg.pose);
     visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
   }
 
   // ------------------------------------------------------------------------
   // Convert pose to global frame (base_link)
-  tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.inverse(), grasp_pose_msg.pose);
+  tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.grasp_pose.inverse(), grasp_pose_msg.pose);
 
   // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
-  new_grasp.grasp.grasp_pose = grasp_pose_msg;
+  new_grasp.grasp_pose = grasp_pose_msg;
 
   // Other ------------------------------------------------------------------------------------------------
 
   // the maximum contact force to use while grasping (<=0 to disable)
-  new_grasp.grasp.max_contact_force = 0;
+  new_grasp.max_contact_force = 0;
 
   // -------------------------------------------------------------------------------------------------------
   // -------------------------------------------------------------------------------------------------------
@@ -325,23 +286,61 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
   pre_grasp_approach.direction.vector.x = 0;
   pre_grasp_approach.direction.vector.y = 0;
   pre_grasp_approach.direction.vector.z = -1; // Approach direction (negative z axis)  // TODO: document this assumption
-  new_grasp.grasp.pre_grasp_approach = pre_grasp_approach;
+  new_grasp.pre_grasp_approach = pre_grasp_approach;
 
   // Retreat
   post_grasp_retreat.direction.header.frame_id = needleGraspData.base_link_;
   post_grasp_retreat.direction.vector.x = 0;
   post_grasp_retreat.direction.vector.y = 0;
   post_grasp_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
-  new_grasp.grasp.post_grasp_retreat = post_grasp_retreat;
+  new_grasp.post_grasp_retreat = post_grasp_retreat;
 
   // Add to vector
-  possible_grasp = new_grasp;
+  possible_grasp_msg = new_grasp;
   return true;
 }
 
-Eigen::Affine3d DavinciSimpleGraspGenerator::calNeedleToGripperPose(const double (&grasping_parameters)[4],
-                                                                    const double &needle_radius,
-                                                                    GraspInfo& grasp_info)
+void DavinciSimpleGraspGenerator::graspGeneratorHelper(const geometry_msgs::PoseStamped &needle_pose,
+                                                       const DavinciNeeldeGraspData &needleGraspData,
+                                                       std::vector<GraspInfo> &grasp_pose)
+{
+  grasp_pose.clear();
+  grasp_pose.resize(0);
+  for (int i = 0; i < needleGraspData.grasp_theta_0_list_.size(); i++)
+  {
+    //  inside first loop
+    double grasp_theta_0 = needleGraspData.grasp_theta_0_list_[i];
+
+    for (int j = 0; j < needleGraspData.grasp_theta_1_list_.size(); j++)
+    {
+      //  inside second loop
+      double grasp_theta_1 = needleGraspData.grasp_theta_1_list_[j];
+
+      for (int k = 0; k < needleGraspData.grasp_theta_2_list_.size(); k++)
+      {
+        //  inside third loop
+        double grasp_theta_2 = needleGraspData.grasp_theta_2_list_[k];
+
+        for (int l = 0; l < needleGraspData.grasp_theta_3_list_.size(); l++)
+        {
+          //  inside fourth loop
+          double grasp_theta_3 = needleGraspData.grasp_theta_3_list_[l];
+
+          double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
+
+          GraspInfo new_grasp;
+          calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, new_grasp);
+
+          grasp_pose.push_back(new_grasp);
+        }
+      }
+    }
+  }
+}
+
+void DavinciSimpleGraspGenerator::calNeedleToGripperPose(const double (&grasping_parameters)[4],
+                                                         const double &needle_radius,
+                                                         GraspInfo &grasp_info)
 {
   double theta_0 = grasping_parameters[0];
   double theta_1 = grasping_parameters[1];
@@ -382,7 +381,7 @@ Eigen::Affine3d DavinciSimpleGraspGenerator::calNeedleToGripperPose(const double
     orientaion; // initialize linear part by Eigen::Matrix3d type orientation
   desired_needle_to_gripper_pose.translation() = translation;
 
-  return desired_needle_to_gripper_pose;
+  grasp_info.grasp_pose = desired_needle_to_gripper_pose;
 }
 
 }  // namespace
