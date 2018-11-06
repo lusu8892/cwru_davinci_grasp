@@ -95,9 +95,8 @@ public:
    *
    * @return
    */
-  bool pickNeedle(const std::string &needle_name,
-                  const geometry_msgs::PoseStamped &needle_pose,
-                  const Eigen::Affine3d &grasp_pose);
+  bool planNeedleGrasp(const std::string &needle_name,
+                       const geometry_msgs::PoseStamped &needle_pose);
 
   /**
    * @brief pick needle by using member variable @var needle_pose_
@@ -300,6 +299,9 @@ private:
   bool hasObject(const std::string &name,
                  const ObjsCheckMap &objsCheckMap);
 };
+
+typedef boost::shared_ptr<DavinciSimpleNeedleGrasper> DavinciSimpleNeedleGrasperPtr;
+typedef boost::shared_ptr<const DavinciSimpleNeedleGrasper> DavinciSimpleNeedleGrasperConstPtr;
 
 }
 
