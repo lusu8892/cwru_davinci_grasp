@@ -40,13 +40,13 @@
 
 namespace cwru_davinci_grasp
 {
-DavinciNeeldeGraspData::DavinciNeeldeGraspData()
+DavinciNeedleGraspData::DavinciNeedleGraspData()
   : base_link_("/base_link")
 {
   // left blank
 }
 
-bool DavinciNeeldeGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
+bool DavinciNeedleGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
                                                 const std::string &end_effector)
 {
   std::vector<std::string> joint_names;
@@ -344,19 +344,19 @@ bool DavinciNeeldeGraspData::loadRobotGraspData(const ros::NodeHandle &nh,
   return true;
 }
 
-bool DavinciNeeldeGraspData::setRobotStatePreGrasp(
+bool DavinciNeedleGraspData::setRobotStatePreGrasp(
   robot_state::RobotStatePtr &robot_state)
 {
   return setRobotState(robot_state, pre_grasp_posture_);
 }
 
-bool DavinciNeeldeGraspData::setRobotStateGrasp(
+bool DavinciNeedleGraspData::setRobotStateGrasp(
   robot_state::RobotStatePtr &robot_state)
 {
   return setRobotState(robot_state, grasp_posture_);
 }
 
-bool DavinciNeeldeGraspData::setRobotState(
+bool DavinciNeedleGraspData::setRobotState(
   robot_state::RobotStatePtr &robot_state,
   const trajectory_msgs::JointTrajectory &posture)
 {
@@ -373,7 +373,7 @@ bool DavinciNeeldeGraspData::setRobotState(
   }
 }
 
-void DavinciNeeldeGraspData::print()
+void DavinciNeedleGraspData::print()
 {
   ROS_WARN_STREAM_NAMED("davinci_needle_grasp_data", "Debug Grasp Data variable values:");
 //  std::cout << "grasp_pose_to_eef_pose_: \n" <<grasp_pose_to_eef_pose_<<std::endl;
@@ -390,7 +390,7 @@ void DavinciNeeldeGraspData::print()
 }
 
 
-void DavinciNeeldeGraspData::fillDataInGraspingParametersList()
+void DavinciNeedleGraspData::fillDataInGraspingParametersList()
 {
   double theta_0 = grasp_theta_0_min_;
   grasp_theta_0_list_.clear();

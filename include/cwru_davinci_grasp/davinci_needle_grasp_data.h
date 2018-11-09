@@ -48,7 +48,7 @@
 #include <moveit/robot_state/robot_state.h>
 namespace cwru_davinci_grasp
 {
-class DavinciNeeldeGraspData
+class DavinciNeedleGraspData
 {
 public:
   trajectory_msgs::JointTrajectory
@@ -118,7 +118,7 @@ public:
    * @brief constructor
    * @return
    */
-  DavinciNeeldeGraspData();
+  DavinciNeedleGraspData();
 
   /**
    * @brief Loads grasp data from a yaml file (load from roslaunch)

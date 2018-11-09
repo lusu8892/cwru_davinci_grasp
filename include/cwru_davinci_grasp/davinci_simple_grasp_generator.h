@@ -74,7 +74,7 @@ public:
    * @return
    */
   bool generateSimpleNeedleGrasps(const geometry_msgs::PoseStamped &needle_pose,
-                                  const DavinciNeeldeGraspData &needleGraspData,
+                                  const DavinciNeedleGraspData &needleGraspData,
                                   std::vector<moveit_msgs::Grasp> &possible_grasp_msgs);
 
 
@@ -87,11 +87,13 @@ public:
    * @return
    */
   bool generateDefinedSimpleNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
-                                        const DavinciNeeldeGraspData &needleGraspData,
-                                        moveit_msgs::Grasp &possible_grasp_msg);
+                                        const DavinciNeedleGraspData &needleGraspData,
+                                        moveit_msgs::Grasp &possible_grasp_msg,
+                                        GraspInfo &grasp_pose,
+                                        bool has_grasp_pose = false);
 
   void graspGeneratorHelper(const geometry_msgs::PoseStamped &needle_pose,
-                            const DavinciNeeldeGraspData &needleGraspData,
+                            const DavinciNeedleGraspData &needleGraspData,
                             std::vector<GraspInfo> &grasp_pose);
 private:
 

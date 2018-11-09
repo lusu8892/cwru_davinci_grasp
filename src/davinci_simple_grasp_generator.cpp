@@ -56,7 +56,7 @@ DavinciSimpleGraspGenerator::~DavinciSimpleGraspGenerator()
 
 bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
   const geometry_msgs::PoseStamped &needle_pose,
-  const DavinciNeeldeGraspData &needleGraspData,
+  const DavinciNeedleGraspData &needleGraspData,
   std::vector<moveit_msgs::Grasp> &possible_grasp_msgs)
 {
   possible_grasp_msgs.clear();
@@ -178,8 +178,10 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 
 
 bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
-                                                                   const DavinciNeeldeGraspData &needleGraspData,
-                                                                   moveit_msgs::Grasp &possible_grasp_msg)
+                                                                   const DavinciNeedleGraspData &needleGraspData,
+                                                                   moveit_msgs::Grasp &possible_grasp_msg,
+                                                                   GraspInfo &grasp_pose,
+                                                                   bool has_grasp_pose)
 {
   // it's advisable to call initSingleton() before you need it for the first
   // time in a time-critical context.
@@ -228,15 +230,17 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
   grasp_pose_msg.header.stamp = ros::Time::now();
   grasp_pose_msg.header.frame_id = needleGraspData.base_link_;
 
-  double grasp_theta_0 = needleGraspData.grasp_theta_0_;
-  double grasp_theta_1 = needleGraspData.grasp_theta_1_;
-  double grasp_theta_2 = needleGraspData.grasp_theta_2_;
-  double grasp_theta_3 = needleGraspData.grasp_theta_3_;
+  if (!has_grasp_pose)
+  {
+    double grasp_theta_0 = needleGraspData.grasp_theta_0_;
+    double grasp_theta_1 = needleGraspData.grasp_theta_1_;
+    double grasp_theta_2 = needleGraspData.grasp_theta_2_;
+    double grasp_theta_3 = needleGraspData.grasp_theta_3_;
 
-  double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
+    double grasping_parameters[] = {grasp_theta_0, grasp_theta_1, grasp_theta_2, grasp_theta_3};
 
-  GraspInfo grasp_pose;
-  calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, grasp_pose);
+    calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, grasp_pose);
+  }
 
   moveit_msgs::Grasp new_grasp;
   // A name for this grasp
@@ -301,7 +305,7 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
 }
 
 void DavinciSimpleGraspGenerator::graspGeneratorHelper(const geometry_msgs::PoseStamped &needle_pose,
-                                                       const DavinciNeeldeGraspData &needleGraspData,
+                                                       const DavinciNeedleGraspData &needleGraspData,
                                                        std::vector<GraspInfo> &grasp_pose)
 {
   grasp_pose.clear();
