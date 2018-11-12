@@ -143,7 +143,7 @@ public:
    */
   std::vector<moveit_msgs::Grasp> getAllPossibleNeedleGraspsList() const;
 
-  std::vector<GraspInfo> getAllPossibleNeedleGrasps() const;
+  std::vector<GraspInfo> getAllPossibleNeedleGrasps();
 
 //  /**
 //   * @brief get the defind needle grasp message

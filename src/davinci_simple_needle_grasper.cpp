@@ -300,8 +300,9 @@ std::vector<moveit_msgs::Grasp> DavinciSimpleNeedleGrasper::getAllPossibleNeedle
   return possible_grasps_msgs_;
 }
 
-std::vector<GraspInfo> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGrasps() const
+std::vector<GraspInfo> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGrasps()
 {
+  simpleNeedleGraspGenerator_->graspGeneratorHelper(needle_pose_, needleGraspData_, possible_grasps_);
   return possible_grasps_;
 }
 
