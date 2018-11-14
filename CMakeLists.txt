@@ -117,7 +117,7 @@ add_definitions(${baselib_binding_DEFINITIONS} ${convenience_ros_functions_DEFIN
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES
+  LIBRARIES cwru_davinci_grasp
   CATKIN_DEPENDS roscpp std_msgs sensor_msgs geometry_msgs moveit_msgs trajectory_msgs moveit_visual_tools
                 cwru_davinci_moveit_object_handling
   #  DEPENDS system_lib
@@ -135,7 +135,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(davinci_simple_needle_grasper
+add_library(cwru_davinci_grasp
   src/davinci_simple_needle_grasper.cpp
   src/davinci_needle_grasp_data.cpp
   src/davinci_simple_grasp_generator.cpp)
@@ -168,9 +168,9 @@ add_executable(davinci_needle_pose_publisher test/davinci_needle_pose_publisher.
 #target_link_libraries(davinci_simple_grasp_generator ${catkin_LIBRARIES})
 
 #target_link_libraries(davinci_simple_grasp_action_server ${catkin_LIBRARIES})
-target_link_libraries(davinci_simple_needle_grasper  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(davinci_simple_needle_grasp_test_node davinci_simple_needle_grasper  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(davinci_simple_needle_grasper_main davinci_simple_needle_grasper  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(davinci_simple_needle_grasp_test_node cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(davinci_simple_needle_grasper_main cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_needle_pose_publisher ${catkin_LIBRARIES})
 
 
@@ -190,18 +190,18 @@ target_link_libraries(davinci_needle_pose_publisher ${catkin_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+ install(TARGETS ${PROJECT_NAME}
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+ install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+   PATTERN ".svn" EXCLUDE
+ )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
