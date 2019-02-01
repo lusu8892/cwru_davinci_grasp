@@ -48,7 +48,7 @@
 #include <moveit/robot_state/robot_state.h>
 namespace cwru_davinci_grasp
 {
-class DavinciNeeldeGraspData
+class DavinciNeedleGraspData
 {
 public:
   trajectory_msgs::JointTrajectory
@@ -56,7 +56,7 @@ public:
   trajectory_msgs::JointTrajectory
       grasp_posture_; // when the end effector is in "close" position
 
-  std::string base_link_; // name of global frame ( with z axis pointing up)
+  std::string base_link_; // name of global frame ( with z axis pointing up), the value will be assigned by the value in MoveIt! package config/.srdf
   std::string ee_parent_link_; // the last link in the kinematic chain before
                                // the end effector
   std::string ee_tool_tip_link_;
@@ -118,7 +118,7 @@ public:
    * @brief constructor
    * @return
    */
-  DavinciNeeldeGraspData();
+  DavinciNeedleGraspData();
 
   /**
    * @brief Loads grasp data from a yaml file (load from roslaunch)

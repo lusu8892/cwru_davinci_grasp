@@ -48,22 +48,23 @@ namespace cwru_davinci_grasp
 {
 
 DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
-    const ros::NodeHandle &nh,
-    const ros::NodeHandle &nh_priv,
-    const std::string &planning_group_name,
-    const std::string &get_planning_scene_service,
-    const std::string &set_planning_scene_topic,
-    const std::string &updated_needle_pose_topic)
-    : nh_(nh), nh_priv_(nh_priv)
+  const ros::NodeHandle &nh,
+  const ros::NodeHandle &nh_priv,
+  const std::string &needle_name,
+  const std::string &planning_group_name,
+  const std::string &get_planning_scene_service,
+  const std::string &set_planning_scene_topic,
+  const std::string &updated_needle_pose_topic)
+  : nh_(nh), nh_priv_(nh_priv), needle_name_(needle_name)
 {
-  ROS_INFO_STREAM_NAMED("DavinciSimpleNeedleGrasper","Starting Simpling Needle Grasping");
+  ROS_INFO_STREAM_NAMED("DavinciSimpleNeedleGrasper", "Starting Simpling Needle Grasping");
 
   // Get arm info from param server
 //  nh_priv_.param("ee_group_name", ee_group_name_, std::string("psm_one_gripper"));
   nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
 
-  ROS_INFO_STREAM_NAMED("moveit_blocks","End Effector: " << ee_group_name_);
-  ROS_INFO_STREAM_NAMED("moveit_blocks","Planning Group: " << planning_group_name_);
+  ROS_INFO_STREAM_NAMED("moveit_blocks", "End Effector: " << ee_group_name_);
+  ROS_INFO_STREAM_NAMED("moveit_blocks", "Planning Group: " << planning_group_name_);
 
   // Re-reate MoveGroup for one of the planning groups
   move_group_.reset(new moveit::planning_interface::MoveGroupInterface(planning_group_name_));
@@ -114,32 +115,49 @@ DavinciSimpleNeedleGrasper::~DavinciSimpleNeedleGrasper()
 
 bool DavinciSimpleNeedleGrasper::pickNeedle(const std::string &needle_name, const NeedlePickMode &mode)
 {
-  return pickNeedle(needle_pose_, needle_name, mode);
+  GraspInfo empty_grasp_pose;
+  return pickNeedle(needle_pose_, needle_name, mode, empty_grasp_pose);
 }
 
-bool DavinciSimpleNeedleGrasper::pickNeedle(
-  const geometry_msgs::PoseStamped &needle_pose, const std::string &needle_name, const NeedlePickMode &mode)
+bool DavinciSimpleNeedleGrasper::planNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
+                                                 const std::string &needle_name,
+                                                 GraspInfo &grasp_pose)
+{
+  return pickNeedle(needle_pose, needle_name, NeedlePickMode::DEFINED, grasp_pose, true, true);
+}
+
+bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &needle_pose,
+                                            const std::string &needle_name,
+                                            const NeedlePickMode &mode,
+                                            GraspInfo &grasp_pose,
+                                            bool has_grasp_pose,
+                                            bool plan_only)
 {
   bool able_to_pick = false;
 
-  attachedObjsCheckMap_ = planning_scene_ -> getAttachedObjects();
-  AttachedObjsCheckMap::iterator attached_it = attachedObjsCheckMap_.find(needle_name);
-
-  if (attached_it != attachedObjsCheckMap_.end())
+  if (hasObject(needle_name, planning_scene_ -> getAttachedObjects()))
   {
-    ROS_INFO("Needle: %s is already grasped", needle_name.c_str());
-    return able_to_pick;
+    if(!move_group_->detachObject(needle_name))
+    {
+      ROS_INFO("Needle: %s is already grasped and can not be detached from group %s", needle_name.c_str(),
+               move_group_->getName().c_str());
+      return able_to_pick;
+    }
   }
 
   objsCheckMap_ = planning_scene_ -> getObjects();
-  ObjsCheckMap::iterator objs_it = objsCheckMap_ .find(needle_name);
 
-  if (objs_it  == objsCheckMap_.end())
+  if (hasObject(needle_name, objsCheckMap_))
   {
+    updateNeedleModel(needle_name);
+  }
+  else
+  {
+    updateNeedlePose();
     if(!addNeedleToPlanningScene(needle_pose, needle_name))
     {
       return able_to_pick;
-    }
+    };
   }
 
   switch (mode)
@@ -147,7 +165,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(
     case NeedlePickMode::RANDOM:
     {
       ROS_INFO("Robot is going to grasp needle with random grasping parameters");
-      moveit_msgs::MoveItErrorCodes error_code = randomPickNeedle(needle_pose, needle_name);
+      moveit_msgs::MoveItErrorCodes error_code = randomPickNeedle(needle_pose, needle_name, possible_grasps_msgs_, plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
 //        if (!davinciNeedleHandler_ -> attachObjectToRobot(needle_name, needleGraspData_.ee_tool_tip_link_))
@@ -170,7 +188,13 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(
     case NeedlePickMode::DEFINED:
     {
       ROS_INFO("Robot is going to grasp needle with user defined grasping parameters");
-      moveit_msgs::MoveItErrorCodes error_code = definedPickNeedle(needle_pose, needle_name);
+      moveit_msgs::MoveItErrorCodes error_code = definedPickNeedle(needle_pose,
+                                                                   needle_name,
+                                                                   defined_grasp_msg_,
+                                                                   grasp_pose,
+                                                                   has_grasp_pose,
+                                                                   plan_only);
+
       if (error_code.val == error_code.SUCCESS)
       {
 //        if (!davinciNeedleHandler_ -> attachObjectToRobot(needle_name, needleGraspData_.ee_tool_tip_link_))
@@ -193,11 +217,12 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(
 }
 
 
-bool DavinciSimpleNeedleGrasper:: DavinciSimpleNeedleGrasper::placeNeedle(const geometry_msgs::Pose &needle_goal_pose,
-                                                                          const std::string &needle_name)
+bool DavinciSimpleNeedleGrasper::placeNeedle(const geometry_msgs::Pose &needle_goal_pose,
+                                             const std::string &needle_name)
 {
   bool able_to_place = false;
-  moveit_msgs::MoveItErrorCodes error_code = placeNeedleHelper(needle_goal_pose, needle_name);
+  std::vector<moveit_msgs::PlaceLocation> empty_place_locations;
+  moveit_msgs::MoveItErrorCodes error_code = placeNeedleHelper(needle_goal_pose, needle_name, empty_place_locations);
   if (error_code.val == error_code.SUCCESS)
   {
     ROS_INFO("Object is able to be placed");
@@ -210,6 +235,92 @@ bool DavinciSimpleNeedleGrasper:: DavinciSimpleNeedleGrasper::placeNeedle(const 
     return able_to_place;
   }
 }
+
+
+bool DavinciSimpleNeedleGrasper::planNeedleRelease(const geometry_msgs::Pose &needle_goal_pose,
+                                                   const std::string &needle_name)
+{
+  bool able_to_place = false;
+
+  geometry_msgs::PoseStamped pose_stamped;
+  pose_stamped.header.frame_id = needleGraspData_.base_link_;
+  pose_stamped.header.stamp = ros::Time::now();
+  pose_stamped.pose.position = needle_goal_pose.position;
+  pose_stamped.pose.orientation = needle_goal_pose.orientation;
+  // Create new place location
+  moveit_msgs::PlaceLocation place_loc;
+
+  place_loc.place_pose = pose_stamped;
+
+//    visual_tools_->publishCuboid(place_loc.place_pose.pose, BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, rviz_visual_tools::BLUE);
+
+  // Approach
+  moveit_msgs::GripperTranslation pre_place_approach;
+  pre_place_approach.direction.header.stamp = ros::Time::now();
+  pre_place_approach.desired_distance = 0; // The distance the origin of a robot link needs to travel
+  pre_place_approach.min_distance = 0; // half of the desired? Untested.
+  pre_place_approach.direction.header.frame_id = needleGraspData_.ee_tool_tip_link_;
+  pre_place_approach.direction.vector.x = 0;
+  pre_place_approach.direction.vector.y = 0;
+  pre_place_approach.direction.vector.z = 1; // Approach direction (negative z axis)  // TODO: document this assumption
+  place_loc.pre_place_approach = pre_place_approach;
+
+  // Retreat
+  moveit_msgs::GripperTranslation post_place_retreat;
+  post_place_retreat.direction.header.stamp = ros::Time::now();
+  post_place_retreat.desired_distance = needleGraspData_.approach_retreat_desired_dist_; // The distance the origin of a robot link needs to travel
+  post_place_retreat.min_distance = needleGraspData_.approach_retreat_min_dist_; // half of the desired? Untested.
+  post_place_retreat.direction.header.frame_id = needleGraspData_.ee_tool_tip_link_;
+  post_place_retreat.direction.vector.x = 0;
+  post_place_retreat.direction.vector.y = 0;
+  post_place_retreat.direction.vector.z = -1; // Retreat direction (pos z axis)
+  place_loc.post_place_retreat = post_place_retreat;
+
+  // Post place posture - use same as pre-grasp posture (the OPEN command)
+  place_loc.post_place_posture = needleGraspData_.pre_grasp_posture_;
+
+  std::vector<moveit_msgs::PlaceLocation> place_location;
+  place_location.push_back(place_loc);
+  moveit_msgs::MoveItErrorCodes error_code = placeNeedleHelper(needle_goal_pose, needle_name, place_location, true);
+  if (error_code.val == error_code.SUCCESS)
+  {
+    ROS_INFO("Object is able to be placed");
+    able_to_place = true;
+    return able_to_place;
+  }
+  else
+  {
+    ROS_INFO("Can not place needle and the error code is %d", error_code.val);
+    return able_to_place;
+  }
+}
+
+std::vector<moveit_msgs::Grasp> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGraspsList() const
+{
+  return possible_grasps_msgs_;
+}
+
+std::vector<GraspInfo> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGrasps() const
+{
+  return possible_grasps_;
+}
+
+//moveit_msgs::Grasp DavinciSimpleNeedleGrasper::getDefinedNeedleGrasp()
+//{
+//  return defined_grasp_.grasp;
+//}
+
+//GraspInfo DavinciSimpleNeedleGrasper::getDefinedNeedleGrasp()
+//{
+//  return defined_grasp_;
+//}
+
+
+geometry_msgs::PoseStamped DavinciSimpleNeedleGrasper::getNeedlePose() const
+{
+  return needle_pose_;
+}
+
 
 bool DavinciSimpleNeedleGrasper::addNeedleToPlanningScene(
     const geometry_msgs::PoseStamped& needle_origin,
@@ -237,7 +348,6 @@ bool DavinciSimpleNeedleGrasper::addNeedleToPlanningScene(
 //    is_added = true;
 //    return is_added;
 //  }
-
   if (!generateNeedleCollisionModel(needle_origin, needle_name))
   {
     ROS_ERROR("DavinciSimpleNeedleGrasper: Can't add needle to planning scene "
@@ -265,7 +375,6 @@ bool DavinciSimpleNeedleGrasper::removeNeedleFromPlanningScene(const std::string
   {
     ROS_INFO("Trying to detach needle from robot, but there is no needle %s attached to robot", needle_name.c_str());
   }
-
 
   if (moveit_planning_scene_diff_publisher_.getNumSubscribers() < 1)
   {
@@ -322,13 +431,16 @@ bool DavinciSimpleNeedleGrasper::removeNeedleFromPlanningScene(const std::string
 
 
 moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::randomPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                                           const std::string &needle_name)
+                                                                           const std::string &needle_name,
+                                                                           std::vector<moveit_msgs::Grasp> &possible_grasp_msgs,
+                                                                           bool plan_only)
 {
-  std::vector<moveit_msgs::Grasp> possible_grasps;
+  possible_grasp_msgs.clear();
+  // std::vector<moveit_msgs::Grasp> possible_grasps;
   // Pick grasp
-  simpleNeedleGraspGenerator_->generateSimpleNeedleGrasps(needle_pose, needleGraspData_, possible_grasps);
+  simpleNeedleGraspGenerator_->generateSimpleNeedleGrasps(needle_pose, needleGraspData_, possible_grasp_msgs);
 
-
+  needleGraspData_.print();
   // Visualize them
   //visual_tools_->publishAnimatedGrasps(possible_grasps, grasp_data_.ee_parent_link_);
   moveit::planning_interface::MoveGroupInterface davinci_gripper_group(needleGraspData_.ee_group_);
@@ -336,7 +448,7 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::randomPickNeedle(const
   const robot_state::JointModelGroup* davinci_eef_jmg =
     davinci_gripper_group.getCurrentState()->getJointModelGroup(needleGraspData_.ee_group_);
 
-//  visual_tools_->publishGrasps(possible_grasps, davinci_eef_jmg);
+  //visual_tools_->publishGrasps(possible_grasps, davinci_eef_jmg);
 
   // Prevent collision with table
   //move_group_->setSupportSurfaceName(SUPPORT_SURFACE3_NAME);
@@ -348,24 +460,28 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::randomPickNeedle(const
     allowed_touch_objects.push_back(needle_name);
 
     // Add this list to all grasps
-    for (std::size_t i = 0; i < possible_grasps.size(); ++i)
+    for (std::size_t i = 0; i < possible_grasp_msgs.size(); ++i)
     {
-      possible_grasps[i].allowed_touch_objects = allowed_touch_objects;
+      possible_grasp_msgs[i].allowed_touch_objects = allowed_touch_objects;
     }
   }
 
-  //ROS_INFO_STREAM_NAMED("","Grasp 0\n" << possible_grasps[0]);
-  return move_group_->pick(needle_name, possible_grasps);
+  return move_group_->pick(needle_name, possible_grasp_msgs, plan_only);
 }
 
 moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::definedPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                                            const std::string &needle_name)
+                                                                            const std::string &needle_name,
+                                                                            moveit_msgs::Grasp &defined_grasp_msgs,
+                                                                            GraspInfo &grasp_pose,
+                                                                            bool has_grasp_pose,
+                                                                            bool plan_only)
 {
-  moveit_msgs::Grasp possible_grasp;
+  // moveit_msgs::Grasp defined_grasp;
   // Pick grasp
-  simpleNeedleGraspGenerator_->generateDefinedSimpleNeedleGrasp(needle_pose, needleGraspData_, possible_grasp);
+  simpleNeedleGraspGenerator_->generateDefinedSimpleNeedleGrasp(needle_pose, needleGraspData_, defined_grasp_msgs,
+                                                                grasp_pose, has_grasp_pose);
 
-
+  needleGraspData_.print();
   // Visualize them
   //visual_tools_->publishAnimatedGrasps(possible_grasps, grasp_data_.ee_parent_link_);
   moveit::planning_interface::MoveGroupInterface davinci_gripper_group(needleGraspData_.ee_group_);
@@ -376,7 +492,7 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::definedPickNeedle(cons
 //  visual_tools_->publishGrasps(possible_grasps, davinci_eef_jmg);
 
   // Prevent collision with table
-  //move_group_->setSupportSurfaceName(SUPPORT_SURFACE3_NAME);
+  //move_group_->setSupport0SurfaceName(SUPPORT_SURFACE3_NAME);
 
   // Allow blocks to be touched by end effector
   {
@@ -385,79 +501,88 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::definedPickNeedle(cons
     allowed_touch_objects.push_back(needle_name);
 
     // Add this list to all grasps
-    possible_grasp.allowed_touch_objects = allowed_touch_objects;
+    defined_grasp_msgs.allowed_touch_objects = allowed_touch_objects;
   }
 
   //ROS_INFO_STREAM_NAMED("","Grasp 0\n" << possible_grasps[0]);
-  return move_group_->pick(needle_name, possible_grasp);
+  return move_group_->pick(needle_name, defined_grasp_msgs, plan_only);
 }
 
-moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::placeNeedleHelper(
-  const geometry_msgs::Pose &needle_goal_pose,
-  const std::string &needle_name)
+moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::placeNeedleHelper(const geometry_msgs::Pose &needle_goal_pose,
+                                                                            const std::string &needle_name,
+                                                                            std::vector<moveit_msgs::PlaceLocation>& place_locations,
+                                                                            bool plan_only)
 {
   ROS_WARN_STREAM_NAMED("place","Placing '"<< needle_name << "'");
-
-  std::vector<moveit_msgs::PlaceLocation> place_locations;
 
   // Re-usable datastruct
   geometry_msgs::PoseStamped pose_stamped;
   pose_stamped.header.frame_id = needleGraspData_.base_link_;
   pose_stamped.header.stamp = ros::Time::now();
 
-  // Create 360 degrees of place location rotated around a center
-  for (double angle = 0; angle < 2*M_PI; angle += M_PI/10)
+  if(place_locations.empty())
   {
-    pose_stamped.pose.position = needle_goal_pose.position;
+    // Create 360 degrees of place location rotated around a center
+    for (double angle = 0; angle < 2*M_PI; angle += M_PI/10)
+    {
+      pose_stamped.pose.position = needle_goal_pose.position;
 
-    // Orientation
-    Eigen::Quaterniond quat(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d::UnitZ()));
-    pose_stamped.pose.orientation.x = quat.x();
-    pose_stamped.pose.orientation.y = quat.y();
-    pose_stamped.pose.orientation.z = quat.z();
-    pose_stamped.pose.orientation.w = quat.w();
+      // Orientation
+      Eigen::Quaterniond quat(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d::UnitZ()));
+      pose_stamped.pose.orientation.x = quat.x();
+      pose_stamped.pose.orientation.y = quat.y();
+      pose_stamped.pose.orientation.z = quat.z();
+      pose_stamped.pose.orientation.w = quat.w();
 
-    // Create new place location
-    moveit_msgs::PlaceLocation place_loc;
+      // Create new place location
+      moveit_msgs::PlaceLocation place_loc;
 
-    place_loc.place_pose = pose_stamped;
+      place_loc.place_pose = pose_stamped;
 
 //    visual_tools_->publishCuboid(place_loc.place_pose.pose, BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, rviz_visual_tools::BLUE);
 
-    // Approach
-    moveit_msgs::GripperTranslation pre_place_approach;
-    pre_place_approach.direction.header.stamp = ros::Time::now();
-    pre_place_approach.desired_distance = needleGraspData_.approach_retreat_desired_dist_; // The distance the origin of a robot link needs to travel
-    pre_place_approach.min_distance = needleGraspData_.approach_retreat_min_dist_; // half of the desired? Untested.
-    pre_place_approach.direction.header.frame_id = needleGraspData_.base_link_;
-    pre_place_approach.direction.vector.x = 0;
-    pre_place_approach.direction.vector.y = 0;
-    pre_place_approach.direction.vector.z = -1; // Approach direction (negative z axis)  // TODO: document this assumption
-    place_loc.pre_place_approach = pre_place_approach;
+      // Approach
+      moveit_msgs::GripperTranslation pre_place_approach;
+      pre_place_approach.direction.header.stamp = ros::Time::now();
+      pre_place_approach.desired_distance = needleGraspData_.approach_retreat_desired_dist_; // The distance the origin of a robot link needs to travel
+      pre_place_approach.min_distance = needleGraspData_.approach_retreat_min_dist_; // half of the desired? Untested.
+      pre_place_approach.direction.header.frame_id = needleGraspData_.ee_tool_tip_link_;
+      pre_place_approach.direction.vector.x = 0;
+      pre_place_approach.direction.vector.y = 0;
+      pre_place_approach.direction.vector.z = 1; // Approach direction (negative z axis)  // TODO: document this assumption
+      place_loc.pre_place_approach = pre_place_approach;
 
-    // Retreat
-    moveit_msgs::GripperTranslation post_place_retreat;
-    post_place_retreat.direction.header.stamp = ros::Time::now();
-    post_place_retreat.desired_distance = needleGraspData_.approach_retreat_desired_dist_; // The distance the origin of a robot link needs to travel
-    post_place_retreat.min_distance = needleGraspData_.approach_retreat_min_dist_; // half of the desired? Untested.
-    post_place_retreat.direction.header.frame_id = needleGraspData_.base_link_;
-    post_place_retreat.direction.vector.x = 0;
-    post_place_retreat.direction.vector.y = 0;
-    post_place_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
-    place_loc.post_place_retreat = post_place_retreat;
+      // Retreat
+      moveit_msgs::GripperTranslation post_place_retreat;
+      post_place_retreat.direction.header.stamp = ros::Time::now();
+      post_place_retreat.desired_distance = 0.0; // The distance the origin of a robot link needs to travel
+      post_place_retreat.min_distance = 0.0; // half of the desired? Untested.
+      post_place_retreat.direction.header.frame_id = needleGraspData_.ee_tool_tip_link_;
+      post_place_retreat.direction.vector.x = 0;
+      post_place_retreat.direction.vector.y = 0;
+      post_place_retreat.direction.vector.z = -1; // Retreat direction (pos z axis)
+      place_loc.post_place_retreat = post_place_retreat;
 
-    // Post place posture - use same as pre-grasp posture (the OPEN command)
-    place_loc.post_place_posture = needleGraspData_.pre_grasp_posture_;
+      // Post place posture - use same as pre-grasp posture (the OPEN command)
+      place_loc.post_place_posture = needleGraspData_.pre_grasp_posture_;
 
-    place_locations.push_back(place_loc);
+      place_locations.push_back(place_loc);
+    }
+
+    // Prevent collision with table
+    //move_group_->setSupportSurfaceName(SUPPORT_SURFACE3_NAME);
+
+    move_group_->setPlannerId("RRTConnectkConfigDefault");
+    return move_group_->place(needle_name, place_locations, plan_only);
+  }
+  else
+  {
+    move_group_->setPlannerId("RRTConnectkConfigDefault");
+    return move_group_->place(needle_name, place_locations, plan_only);
   }
 
-  // Prevent collision with table
-  //move_group_->setSupportSurfaceName(SUPPORT_SURFACE3_NAME);
 
-  move_group_->setPlannerId("RRTConnectkConfigDefault");
 
-  return move_group_->place(needle_name, place_locations);
 }
 
 bool DavinciSimpleNeedleGrasper::generateNeedleCollisionModel(
@@ -527,7 +652,58 @@ bool DavinciSimpleNeedleGrasper::generateNeedleCollisionModel(
 void DavinciSimpleNeedleGrasper::needlePoseCallBack(
     const geometry_msgs::PoseStamped& needle_pose)
 {
+  fresh_needle_pose_ = true;
   needle_pose_ = needle_pose;
+}
+
+void DavinciSimpleNeedleGrasper::updateNeedlePose()
+{
+  while (!fresh_needle_pose_)
+  {
+    ros::spinOnce();
+    ros::Duration(0.1).sleep();
+  }
+}
+
+bool DavinciSimpleNeedleGrasper::hasObject(const std::string &name,
+                                           const AttachedObjsCheckMap &attachedObjsCheckMap)
+{
+  AttachedObjsCheckMap::const_iterator attached_it = attachedObjsCheckMap.find(name);
+
+  if (attached_it != attachedObjsCheckMap.end())
+  {
+    return true;
+  }
+  return false;
+}
+
+bool DavinciSimpleNeedleGrasper::hasObject(const std::string &name,
+                                           const ObjsCheckMap &objsCheckMap)
+{
+  ObjsCheckMap::const_iterator objs_it = objsCheckMap.find(name);
+
+  if (objs_it  != objsCheckMap_.end())
+  {
+    return true;
+  }
+  return false;
+}
+
+bool DavinciSimpleNeedleGrasper::updateNeedleModel(const std::string &needle_name)
+{
+  bool updated = false;
+  if(!removeNeedleFromPlanningScene(needle_name))
+  {
+    return updated;
+  }
+
+  updateNeedlePose();
+
+  if(!addNeedleToPlanningScene(needle_pose_, needle_name))
+    return updated;
+
+  updated = true;
+  return updated;
 }
 
 }  // namespace

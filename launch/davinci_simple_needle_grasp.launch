@@ -1,5 +1,6 @@
 <launch>
-<node name="davinci_needle_pose_publisher" pkg="cwru_davinci_grasp" type="davinci_needle_pose_publisher" respawn="false" output="screen"/>
+    <!--node name="davinci_needle_pose_publisher" pkg="cwru_davinci_grasp" type="davinci_needle_pose_publisher" respawn="false" output="screen"/-->
+
     # specify which arm is going to perform needle grasp
     <arg name = "which_arm" default = "psm_one"/>
 

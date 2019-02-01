@@ -63,12 +63,12 @@
 namespace cwru_davinci_grasp
 {
 
-struct NeedleModel
-{
-  std::string name;
-  geometry_msgs::Pose start_pose;
-  geometry_msgs::Pose goal_pose;
-};
+//struct NeedleModel
+//{
+//  std::string name;
+//  geometry_msgs::Pose start_pose;
+//  geometry_msgs::Pose goal_pose;
+//};
 
 //  scoped enum definition for user to choose needle pick mode
 enum class NeedlePickMode { RANDOM, DEFINED };
@@ -84,11 +84,23 @@ public:
   DavinciSimpleNeedleGrasper(const ros::NodeHandle &nh,
                              const ros::NodeHandle &nh_priv,
                              const std::string &planning_group_name,
+                             const std::string &needle_name,
                              const std::string &get_planning_scene_service = "get_planning_scene",
                              const std::string &set_planning_scene_topic = "planning_scene",
                              const std::string &updated_needle_pose_topic = "updated_needle_pose");
 
   ~DavinciSimpleNeedleGrasper();
+
+  /**
+   * @brief plan needle grasp with defined grasp pose
+   * @param needle_pose
+   * @param needle_name
+   * @param grasp_pose
+   * @return
+   */
+  bool planNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
+                       const std::string &needle_name,
+                       GraspInfo &grasp_pose);
 
   /**
    * @brief pick needle by using member variable @var needle_pose_
@@ -107,7 +119,13 @@ public:
    */
   bool pickNeedle(const geometry_msgs::PoseStamped &needle_pose,
                   const std::string &needle_name,
-                  const NeedlePickMode &mode);
+                  const NeedlePickMode &mode,
+                  GraspInfo &grasp_pose,
+                  bool has_grasp_pose = false,
+                  bool plan_only = false);
+
+  bool planNeedleRelease(const geometry_msgs::Pose &needle_goal_pose,
+                         const std::string &needle_name);
 
   /**
    * @brief place needle
@@ -116,25 +134,55 @@ public:
    * @return
    */
   bool placeNeedle(const geometry_msgs::Pose &needle_goal_pose,
-                         const std::string &needle_name);
+                   const std::string &needle_name);
 
+  /**
+   * @brief get all possible needle grasps messages
+   * @param needle_pose
+   * @return
+   */
+  std::vector<moveit_msgs::Grasp> getAllPossibleNeedleGraspsList() const;
 
+  std::vector<GraspInfo> getAllPossibleNeedleGrasps() const;
+
+//  /**
+//   * @brief get the defind needle grasp message
+//   * @return
+//   */
+//  moveit_msgs::Grasp getDefinedNeedleGrasp();
+
+  /**
+   * @brief get the defined needle GraspInfo
+   * @return
+   */
+  GraspInfo getDefinedNeedleGrasp();
+
+  /**
+   * @brief return needle pose
+   * @return
+   */
+  geometry_msgs::PoseStamped getNeedlePose() const;
+
+  DavinciNeedleGraspData needleGraspData_;
 private:
-  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
 
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
   std::string ee_group_name_;  // end-effector group
   std::string planning_group_name_;  // the planning group normally it is the parent group of end-effector
+
+  std::string needle_name_;
 
   ros::NodeHandle nh_;
 
   ros::NodeHandle nh_priv_;
-
   ros::ServiceClient moveit_planning_scene_diff_client_;
+
   ros::Publisher moveit_planning_scene_diff_publisher_;
 
   ros::Subscriber needle_pose_sub_;
-
   geometry_msgs::PoseStamped needle_pose_;
+
+  geometry_msgs::PoseStamped grasped_needle_pose_;
 
   moveit_msgs::CollisionObject needle_collision_model_;
 
@@ -149,19 +197,26 @@ private:
 
   davinci_moveit_object_handling::DavinciMoveitGraspedObjectHandlerPtr davinciNeedleHandler_;
 
-  DavinciNeeldeGraspData needleGraspData_;
-
   DavinciSimpleGraspGeneratorPtr simpleNeedleGraspGenerator_;
 
+  std::vector<GraspInfo> possible_grasps_;
+
+  std::vector<moveit_msgs::Grasp> possible_grasps_msgs_;
+
+  moveit_msgs::Grasp defined_grasp_msg_;
+
+  bool fresh_needle_pose_ = false;
 
   /**
-   * @brief pick up needle by using possible grasping poses list
-   * @param needle_pose
-   * @param needle_name
-   * @return
-   */
+ * @brief pick up needle by using possible grasping poses list
+ * @param needle_pose
+ * @param needle_name
+ * @return
+ */
   moveit_msgs::MoveItErrorCodes randomPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                 const std::string &needle_name);
+                                                 const std::string &needle_name,
+                                                 std::vector<moveit_msgs::Grasp> &possible_grasp_msgs,
+                                                 bool plan_only = false);
 
   /**
    * @brief pick up needle by user defined grasping parameter
@@ -170,7 +225,11 @@ private:
    * @return
    */
   moveit_msgs::MoveItErrorCodes definedPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                  const std::string &needle_name);
+                                                  const std::string &needle_name,
+                                                  moveit_msgs::Grasp &defined_grasp_msgs,
+                                                  GraspInfo &grasp_pose,
+                                                  bool has_grasp_pose = false,
+                                                  bool plan_only = false);
 
   /**
    * @brief helper function to place needle
@@ -179,7 +238,9 @@ private:
    * @return
    */
   moveit_msgs::MoveItErrorCodes placeNeedleHelper(const geometry_msgs::Pose &needle_goal_pose,
-                                                  const std::string &needle_name);
+                                                  const std::string &needle_name,
+                                                  std::vector<moveit_msgs::PlaceLocation>& place_locations,
+                                                  bool plan_only = false);
 
   /**
    * @brief to add a needle collision model in planning scene
@@ -224,7 +285,39 @@ private:
    * @param needle_pose
    */
   void needlePoseCallBack(const geometry_msgs::PoseStamped& needle_pose);
+
+  /**
+   * @brief update needle pose received from callback function
+   */
+  void updateNeedlePose();
+
+  /**
+   * @brief Update needle's collision model in the planning scene
+   * @return
+   */
+  bool updateNeedleModel(const std::string &needle_name);
+
+  /**
+   * @brief Check if object is being attached by planning group
+   * @param name
+   * @param attachedObjsCheckMap
+   * @return
+   */
+  bool hasObject(const std::string &name,
+                 const AttachedObjsCheckMap &attachedObjsCheckMap);
+
+  /**
+   * @brief Check if object is in the current planning scene
+   * @param name
+   * @param objsCheckMap
+   * @return
+   */
+  bool hasObject(const std::string &name,
+                 const ObjsCheckMap &objsCheckMap);
 };
+
+typedef boost::shared_ptr<DavinciSimpleNeedleGrasper> DavinciSimpleNeedleGrasperPtr;
+typedef boost::shared_ptr<const DavinciSimpleNeedleGrasper> DavinciSimpleNeedleGrasperConstPtr;
 
 }
 
