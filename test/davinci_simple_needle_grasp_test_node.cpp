@@ -75,7 +75,7 @@ int main(int argc, char** argv)
   visual_tools->trigger();
 
   cwru_davinci_grasp::DavinciSimpleNeedleGrasper needleGrasper(node_handle, node_handle_priv, "psm_one",
-                                           "get_planning_scene", "planning_scene", "updated_needle_pose");
+                                           "/get_planning_scene", "/planning_scene", "/updated_needle_pose");
 
   geometry_msgs::PoseStamped needle_pose;
   needle_pose.header.stamp = ros::Time::now();

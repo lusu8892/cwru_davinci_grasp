@@ -42,32 +42,66 @@
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "davinci_simple_needle_grasp_test_node");
+  ros::init(argc, argv, "davinci_needle_pose_publisher");
 
   ros::NodeHandle nh;
+  ros::NodeHandle node_handle_priv("~");
 
-  ros::Publisher updated_needle_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("updated_needle_pose", 1000);
+  ros::AsyncSpinner spinner(1);
+  ros::Duration(5.0).sleep();
+  spinner.start();
+  ros::Publisher updated_needle_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/updated_needle_pose", 1000);
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(1.0);
+
+  std::vector<double> needle_pose_translation;
+  std::vector<double> needle_pose_orientation;
+
+  if (node_handle_priv.hasParam("needle_pose_translation"))
+  {
+    XmlRpc::XmlRpcValue needle_pose_list;
+    node_handle_priv.getParam("needle_pose_translation", needle_pose_list);
+
+    ROS_ASSERT(needle_pose_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
+
+    for (int32_t i = 0; i < needle_pose_list.size(); ++i)
+    {
+      ROS_ASSERT(needle_pose_list[i].getType() ==
+                 XmlRpc::XmlRpcValue::TypeDouble);
+      needle_pose_translation.push_back(static_cast<double>(needle_pose_list[i]));
+    }
+  }
+
+  if (node_handle_priv.hasParam("needle_pose_orientation"))
+  {
+    XmlRpc::XmlRpcValue needle_ori_list;
+    node_handle_priv.getParam("needle_pose_orientation", needle_ori_list);
+
+    ROS_ASSERT(needle_ori_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
+
+    for (int32_t i = 0; i < needle_ori_list.size(); ++i)
+    {
+      ROS_ASSERT(needle_ori_list[i].getType() ==
+                 XmlRpc::XmlRpcValue::TypeDouble);
+      needle_pose_orientation.push_back(static_cast<double>(needle_ori_list[i]));
+    }
+  }
 
   geometry_msgs::PoseStamped needle_pose;
+  needle_pose.header.frame_id = "/world";
   needle_pose.header.stamp = ros::Time::now();
-  needle_pose.header.frame_id = "world";
-  needle_pose.pose.position.x = -0.248;
-  needle_pose.pose.position.y = 0.0;
-  needle_pose.pose.position.z = 0.45;
-  needle_pose.pose.orientation.w = 1;
-  needle_pose.pose.orientation.x = 0;
-  needle_pose.pose.orientation.y = 0;
-  needle_pose.pose.orientation.z = 0;
+  needle_pose.pose.position.x = needle_pose_translation[0];
+  needle_pose.pose.position.y = needle_pose_translation[1];
+  needle_pose.pose.position.z = needle_pose_translation[2];
+  needle_pose.pose.orientation.x = needle_pose_orientation[0];
+  needle_pose.pose.orientation.y = needle_pose_orientation[1];
+  needle_pose.pose.orientation.z = needle_pose_orientation[2];
+  needle_pose.pose.orientation.w = needle_pose_orientation[3];
 
   while (ros::ok())
   {
     updated_needle_pose_pub.publish(needle_pose);
-
     ros::spinOnce();
-
-    loop_rate.sleep();
   }
   return 0;
 }

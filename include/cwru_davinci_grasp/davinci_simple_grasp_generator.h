@@ -54,7 +54,23 @@ struct GraspInfo
 {
   Eigen::Affine3d grasp_pose;
   int part_id;
+  struct GraspParamInfo
+  {
+    int param_0_index;
+    int param_1_index;
+    int param_2_index;
+    int param_3_index;
+    int grasp_id;
+  };
+  GraspParamInfo graspParamInfo;
+  double theta_diff_avg;
+
+  bool operator<(const GraspInfo& otherGrasp) const
+  {
+    return theta_diff_avg < otherGrasp.theta_diff_avg;
+  }
 };
+
 
 /**
  * helper functions to generator simple Grasp Message objects.
@@ -75,7 +91,8 @@ public:
    */
   bool generateSimpleNeedleGrasps(const geometry_msgs::PoseStamped &needle_pose,
                                   const DavinciNeedleGraspData &needleGraspData,
-                                  std::vector<moveit_msgs::Grasp> &possible_grasp_msgs);
+                                  std::vector<moveit_msgs::Grasp> &possible_grasp_msgs,
+                                  bool sort);
 
 
 
@@ -94,7 +111,7 @@ public:
 
   void graspGeneratorHelper(const geometry_msgs::PoseStamped &needle_pose,
                             const DavinciNeedleGraspData &needleGraspData,
-                            std::vector<GraspInfo> &grasp_pose);
+                            std::vector<GraspInfo> &grasp_pose, bool sort);
 private:
 
   // class for publishing stuff to rviz

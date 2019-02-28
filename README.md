@@ -70,10 +70,10 @@ To pick up needle, you can either tell robot to grasp needle by defined paramete
 To change the defined parameters for needle grasp, change theta_normal value in file [dvrk_psm_grasp_needle_data.yaml](https://github.com/lusu8892/cwru_davinci_grasp/blob/master/config/dvrk_psm_grasp_needle_data.yaml)
 ```
 // pick up needle by defined grasping parameters
-simpleNeedleGrasper_.pickNeedle(needle_name, NeedlePickMode::DEFINED);
+simpleNeedleGrasper_.pickNeedle(NeedlePickMode::DEFINED, needle_name);
 
 // or pick up needle by searching through all possible grasping transformations
-simpleNeedleGrasper_.pickNeedle(needle_name, NeedlePickMode::RANDOM);
+simpleNeedleGrasper_.pickNeedle(NeedlePickMode::RANDOM, needle_name);
 ```
 
 To place needle, you need to pass a needle pose goal to placeNeedle() function, The goal pose only requires translation part defined by user, the orientation of needle placement will be decided by motion planner. NOTICE: The goal pose needs to be defined with respect to world frame(the global reference frame). Here is an example:

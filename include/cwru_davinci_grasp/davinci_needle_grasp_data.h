@@ -97,6 +97,14 @@ public:
 
   double grasp_theta_3_max_;
 
+  double weight_0_;
+  
+  double weight_1_;
+  
+  double weight_2_;
+  
+  double weight_3_;
+
   std::vector<double> grasp_theta_0_list_;
 
   std::vector<double> grasp_theta_1_list_;
@@ -105,10 +113,11 @@ public:
 
   std::vector<double> grasp_theta_3_list_;
 
-  double approach_retreat_desired_dist_; // how far back from the grasp position
-                                         // the pregrasp phase should be
-  double approach_retreat_min_dist_;     // how far back from grasp position the
-                                         // pregrasp phase should be at minimum
+  double approach_desired_dist_; // how far back from the grasp position the pregrasp phase should be
+  double approach_min_dist_;     // how far back from grasp position the pregrasp phase should be at minimum
+
+  double retreat_desired_dist_;
+  double retreat_min_dist_;
 
   double object_size_; // for visualization
 
