@@ -382,6 +382,20 @@ geometry_msgs::PoseStamped DavinciSimpleNeedleGrasper::getNeedlePose() const
   return needle_pose_;
 }
 
+geometry_msgs::Transform DavinciSimpleNeedleGrasper::getGraspTransform()
+{
+  updateNeedlePose();
+
+  tf::Pose needle_pose;
+  tf::poseMsgToTF(needle_pose_.pose, needle_pose);
+  tf::Pose tip_pose;
+  tf::poseMsgToTF(move_group_->getCurrentPose(needleGraspData_.ee_tool_tip_link_).pose, tip_pose);
+
+  tf::Transform grasp_tf = tip_pose.inverse() * needle_pose;
+  geometry_msgs::Transform grasp_tf_msg;
+  tf::transformTFToMsg(grasp_tf, grasp_tf_msg);
+  return grasp_tf_msg;
+}
 
 bool DavinciSimpleNeedleGrasper::addNeedleToPlanningScene(
     const geometry_msgs::PoseStamped& needle_origin,
@@ -780,6 +794,7 @@ void DavinciSimpleNeedleGrasper::updateNeedlePose()
     ros::spinOnce();
     ros::Duration(0.1).sleep();
   }
+  fresh_needle_pose_ = false;  // reset to false
 }
 
 bool DavinciSimpleNeedleGrasper::hasObject(const std::string &name,

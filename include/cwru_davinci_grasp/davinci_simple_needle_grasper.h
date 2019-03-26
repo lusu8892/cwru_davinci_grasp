@@ -162,6 +162,8 @@ public:
    */
   geometry_msgs::PoseStamped getNeedlePose() const;
 
+  geometry_msgs::Transform getGraspTransform();
+
   DavinciNeedleGraspData needleGraspData_;
 private:
 

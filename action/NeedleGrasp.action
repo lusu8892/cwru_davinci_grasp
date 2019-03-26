@@ -19,6 +19,7 @@ string object_name
 ---
 #result definition
 int32 result
+geometry_msgs/Transform grasp_transform
 ---                                                                                       #
 #feedback: optional; could declare step number of trajectory in progress,                 #
 #currently there is no use for feedback                                                   #

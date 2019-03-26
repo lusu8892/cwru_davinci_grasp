@@ -82,9 +82,11 @@ void DavinciNeedleGrasperActionServer::sendResultToActionClient(
       break;
     case 1:
       result_.result = NeedleGraspGoal::GRASPING_SUCCESSED_DEFINED_GRASP;
+      result_.grasp_transform = needleGrasper_->getGraspTransform();
       break;
     case 2:
       result_.result = NeedleGraspGoal::GRASPING_SUCCESSED_RANDOM_GRASP;
+      result_.grasp_transform = needleGrasper_->getGraspTransform();
       break;
     case 3:
       result_.result = NeedleGraspGoal::RELEASING_SUCCESSED;
