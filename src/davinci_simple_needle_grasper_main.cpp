@@ -102,8 +102,8 @@ int main(int argc, char** argv)
 
   DavinciSimpleNeedleGrasper needleGrasper(node_handle,
                                            node_handle_priv,
-                                           needle_name,
-                                           which_arm);
+                                           which_arm,
+                                           needle_name);
 
   if (!is_place)
   {

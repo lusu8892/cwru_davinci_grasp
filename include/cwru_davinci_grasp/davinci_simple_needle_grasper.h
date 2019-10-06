@@ -82,8 +82,6 @@ public:
                              const std::string &set_planning_scene_topic = "/planning_scene",
                              const std::string &updated_needle_pose_topic = "/updated_needle_pose");
 
-  ~DavinciSimpleNeedleGrasper();
-
   /**
    * @brief plan needle grasp with defined grasp pose
    * @param needle_pose

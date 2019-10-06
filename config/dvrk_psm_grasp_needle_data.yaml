@@ -25,8 +25,8 @@ psm_one_gripper:
     theta_normal : [0.004, 0.0, 0.0, 0.0833]
 
     #grasping parameters limits
-    #theta_limits : [0.002, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 3.1415]
-    theta_limits : [0.002, 0.004, -3.1415, 0.0, -3.1415, 3.1415, 0.16667, 2.97483]
+    #theta_limits : [0.003, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 2.97483]
+    theta_limits : [0.002, 0.004, 0.0, 0.0, -3.1415, 3.1415, 0.16667, 2.97483]
 
     #possible needle grasping search resolution
     #theta_resolution : [0.001, 1.03, 1.047, 0.4569]

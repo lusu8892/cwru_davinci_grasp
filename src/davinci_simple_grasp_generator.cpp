@@ -46,6 +46,9 @@ DavinciSimpleGraspGenerator::DavinciSimpleGraspGenerator(moveit_visual_tools::Mo
                                                          bool verbose) :
   visual_tools_(visual_tools), verbose_(verbose)
 {
+  // it's advisable to call initSingleton() before you need it for the first
+  // time in a time-critical context.
+  convenience_ros_functions::ROSFunctions::initSingleton();
   ROS_INFO("DavinciSimpleGraspGenerator, loaded simple needle generator");
 }
 
@@ -61,10 +64,6 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
   bool sort)
 {
   possible_grasp_msgs.clear();
-  // it's advisable to call initSingleton() before you need it for the first
-  // time in a time-critical context.
-  convenience_ros_functions::ROSFunctions::initSingleton();
-
   // ---------------------------------------------------------------------------------------------
   // first, transform from the object's frame (center of object) to /base_link
   geometry_msgs::PoseStamped _needle_pose = needle_pose;
@@ -184,11 +183,6 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
                                                                    GraspInfo &grasp_pose,
                                                                    bool has_grasp_pose)
 {
-  // it's advisable to call initSingleton() before you need it for the first
-  // time in a time-critical context.
-  convenience_ros_functions::ROSFunctions::initSingleton();
-
-  // ---------------------------------------------------------------------------------------------
   // first, transform from the object's frame (center of object) to /base_link
   geometry_msgs::PoseStamped _needle_pose = needle_pose;
   std::string base_frame = needleGraspData.base_link_;
