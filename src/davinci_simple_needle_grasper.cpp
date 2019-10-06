@@ -111,12 +111,6 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
   ros::Duration(1.0).sleep();
 }
 
-DavinciSimpleNeedleGrasper::~DavinciSimpleNeedleGrasper()
-{
-  // blank
-  convenience_ros_functions::ROSFunctions::destroySingleton();
-}
-
 bool DavinciSimpleNeedleGrasper::pickNeedle(const NeedlePickMode &mode, const std::string &needle_name)
 {
   GraspInfo empty_grasp_pose;

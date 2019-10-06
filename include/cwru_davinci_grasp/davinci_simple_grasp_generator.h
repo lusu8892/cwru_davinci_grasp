@@ -80,6 +80,7 @@ class DavinciSimpleGraspGenerator
 public:
   DavinciSimpleGraspGenerator(moveit_visual_tools::MoveItVisualToolsPtr visual_tools,
                               bool verbose = false);
+
   ~DavinciSimpleGraspGenerator();
 
   /**
