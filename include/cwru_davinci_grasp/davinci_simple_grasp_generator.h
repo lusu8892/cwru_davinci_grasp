@@ -110,8 +110,7 @@ public:
                                         GraspInfo &grasp_pose,
                                         bool has_grasp_pose = false);
 
-  void graspGeneratorHelper(const geometry_msgs::PoseStamped &needle_pose,
-                            const DavinciNeedleGraspData &needleGraspData,
+  void graspGeneratorHelper(const DavinciNeedleGraspData &needleGraspData,
                             std::vector<GraspInfo> &grasp_pose, bool sort);
 private:
 
