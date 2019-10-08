@@ -47,11 +47,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle node_handle_priv("~");
 
-  ros::AsyncSpinner spinner(1);
-  ros::Duration(5.0).sleep();
-  spinner.start();
   ros::Publisher updated_needle_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/updated_needle_pose", 1000);
-
   ros::Rate loop_rate(1.0);
 
   std::vector<double> needle_pose_translation;
@@ -102,6 +98,7 @@ int main(int argc, char** argv)
   {
     updated_needle_pose_pub.publish(needle_pose);
     ros::spinOnce();
+    loop_rate.sleep();
   }
   return 0;
 }

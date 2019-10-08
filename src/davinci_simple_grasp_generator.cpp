@@ -109,7 +109,7 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 
 
   std::vector<GraspInfo> grasp_poses;
-  graspGeneratorHelper(needle_pose, needleGraspData, grasp_poses, sort);
+  graspGeneratorHelper(needleGraspData, grasp_poses, sort);
   int grasp_id = 0;
   for (const GraspInfo &grasp_pose : grasp_poses)
   {
@@ -299,8 +299,7 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
   return true;
 }
 
-void DavinciSimpleGraspGenerator::graspGeneratorHelper(const geometry_msgs::PoseStamped &needle_pose,
-                                                       const DavinciNeedleGraspData &needleGraspData,
+void DavinciSimpleGraspGenerator::graspGeneratorHelper(const DavinciNeedleGraspData &needleGraspData,
                                                        std::vector<GraspInfo> &grasp_pose, bool sort)
 {
   grasp_pose.clear();
