@@ -1,0 +1,7 @@
+<launch>
+<!--    To run write, it requires moveit robot demo launched.-->
+    <node name="davinci_grasp_info_writer" pkg="cwru_davinci_grasp" type="davinci_grasp_info_writer">
+        <rosparam command="load" file="$(find cwru_davinci_grasp)/config/dvrk_psm_grasp_needle_data.yaml"/>
+        <param name="packPath" value="$(find cwru_davinci_grasp)"/>
+    </node>
+</launch>
