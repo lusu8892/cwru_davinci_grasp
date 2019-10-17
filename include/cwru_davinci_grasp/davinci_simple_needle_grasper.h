@@ -42,8 +42,10 @@
 #ifndef CWRU_DAVINCI_GRASP_DAVINCI_SIMPLE_NEEDLE_GRASPER_H
 #define CWRU_DAVINCI_GRASP_DAVINCI_SIMPLE_NEEDLE_GRASPER_H
 
+// include base header
+#include <cwru_davinci_grasp/davinci_needle_grasper_base.h>
+
 // ROS
-#include <ros/ros.h>
 #include <geometric_shapes/shapes.h>
 #include <geometric_shapes/shape_operations.h>
 #include <shape_msgs/Mesh.h>
@@ -53,8 +55,6 @@
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 
 // Grasp generation
-#include <cwru_davinci_grasp/davinci_simple_grasp_generator.h>
-#include <cwru_davinci_grasp/davinci_needle_grasp_data.h>
 #include <moveit_visual_tools/moveit_visual_tools.h> // simple tool for showing grasp
 #include <moveit_msgs/AttachedCollisionObject.h>
 
@@ -66,7 +66,7 @@ namespace cwru_davinci_grasp
 //  scoped enum definition for user to choose needle pick mode
 enum class NeedlePickMode { RANDOM, DEFINED, OPTIMAL };
 
-class DavinciSimpleNeedleGrasper
+class DavinciSimpleNeedleGrasper : public DavinciNeedleGrasperBase
 {
 private:
 
@@ -81,6 +81,8 @@ public:
                              const std::string &get_planning_scene_service = "/get_planning_scene",
                              const std::string &set_planning_scene_topic = "/planning_scene",
                              const std::string &updated_needle_pose_topic = "/updated_needle_pose");
+
+  virtual ~DavinciSimpleNeedleGrasper(){}
 
   /**
    * @brief plan needle grasp with defined grasp pose
@@ -140,14 +142,6 @@ public:
    */
   std::vector<moveit_msgs::Grasp> getAllPossibleNeedleGraspsList() const;
 
-  std::vector<GraspInfo> getAllPossibleNeedleGrasps(bool sort = false);
-
-//  /**
-//   * @brief get the defind needle grasp message
-//   * @return
-//   */
-//  moveit_msgs::Grasp getDefinedNeedleGrasp();
-
   /**
    * @brief get the defined needle GraspInfo
    * @return
@@ -162,18 +156,12 @@ public:
 
   geometry_msgs::Transform getGraspTransform();
 
-  DavinciNeedleGraspData needleGraspData_;
 private:
-
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
-  std::string ee_group_name_;  // end-effector group
-  std::string planning_group_name_;  // the planning group normally it is the parent group of end-effector
-
   std::string needle_name_;
 
   ros::NodeHandle nh_;
 
-  ros::NodeHandle nh_priv_;
   ros::ServiceClient moveit_planning_scene_diff_client_;
 
   ros::Publisher moveit_planning_scene_diff_publisher_;
@@ -198,10 +186,6 @@ private:
 
   davinci_moveit_object_handling::DavinciMoveitGraspedObjectHandlerPtr davinciNeedleHandler_;
 
-  DavinciSimpleGraspGeneratorPtr simpleNeedleGraspGenerator_;
-
-  std::vector<GraspInfo> possible_grasps_;
-
   std::vector<moveit_msgs::Grasp> possible_grasps_msgs_;
 
   std::vector<moveit_msgs::Grasp> feasible_grasps_msgs_;
@@ -210,6 +194,7 @@ private:
 
   bool fresh_needle_pose_ = false;
 
+private:
   /**
  * @brief pick up needle by using possible grasping poses list
  * @param needle_pose

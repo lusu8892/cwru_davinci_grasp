@@ -130,7 +130,10 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
     {
       // Convert pose to global frame (base_link)
       tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.grasp_pose.inverse(), grasp_pose_msg.pose);
-      visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
+      if(visual_tools_)
+      {
+        visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
+      }
     }
 
     // ------------------------------------------------------------------------
@@ -256,7 +259,10 @@ bool DavinciSimpleGraspGenerator::generateDefinedSimpleNeedleGrasp(const geometr
   {
     // Convert pose to global frame (base_link)
     tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.grasp_pose.inverse(), grasp_pose_msg.pose);
-    visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
+    if(visual_tools_)
+    {
+      visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
+    }
   }
 
   // ------------------------------------------------------------------------

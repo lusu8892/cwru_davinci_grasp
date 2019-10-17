@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2018, Case Western Reserve University
+ *  Copyright (c) 2019, Case Western Reserve University
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,48 +32,28 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Su Lu <sxl924@case.edu>
- * Description: The main program writes grasp info array to files
- */
-
 #include <cwru_davinci_grasp/davinci_needle_grasper_base.h>
-#include <fstream>
 
 using namespace cwru_davinci_grasp;
-int main(int argc, char** argv)
+
+DavinciNeedleGrasperBase::DavinciNeedleGrasperBase(const ros::NodeHandle &nh_priv,
+                                                   const std::string &planning_group_name,
+                                                   const std::string &ee_group_name)
+                                                   : nh_priv_(nh_priv)
 {
-  ros::init(argc, argv, "davinci_grasp_info_writer");
+  nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
+  nh_priv_.param("ee_group_name", ee_group_name_, ee_group_name);
 
-  ros::NodeHandle node_handle;
-  ros::NodeHandle node_handle_priv("~");
-
-  std::string packPath;
-  std::string planning_group_name;
-  std::string ee_group_name;
-  node_handle_priv.getParam("packPath", packPath);
-  node_handle_priv.getParam("planning_group_name", planning_group_name);
-  node_handle_priv.getParam("ee_group_name", ee_group_name);
-  DavinciNeedleGrasperBasePtr pNeedleGrasper(new DavinciNeedleGrasperBase(node_handle_priv,
-                                                                          planning_group_name,
-                                                                          ee_group_name));
-
-  const std::vector<GraspInfo> graspInfoArray = pNeedleGrasper->getAllPossibleNeedleGrasps();
-
-  std::ofstream outFile(packPath +"/../" + "AllNeedleGraspTransformations.txt");
-  // the important part
-  for (size_t i = 0; i < graspInfoArray.size(); ++i)
+  if (!needleGraspData_.loadRobotGraspData(nh_priv_, ee_group_name_))
   {
-    outFile << "grasp index " << i << "\n";
-    outFile << "grasp part " << graspInfoArray[i].part_id << "\n";
-    outFile << "grasp translation: " << "\n";
-    outFile << "x: " << graspInfoArray[i].grasp_pose.translation().x() << "\n";
-    outFile << "y: " << graspInfoArray[i].grasp_pose.translation().y() << "\n";
-    outFile << "z: " << graspInfoArray[i].grasp_pose.translation().z() << "\n";
-    outFile << "grasp orientation: " << "\n";
-    outFile << graspInfoArray[i].grasp_pose.rotation() << "\n";
-    outFile << "-------------------------------" << "\n";
+    ros::shutdown();
   }
-  
-  outFile.close();
-  return 0;
+
+  simpleNeedleGraspGenerator_.reset(new cwru_davinci_grasp::DavinciSimpleGraspGenerator());
+}
+
+std::vector<GraspInfo> DavinciNeedleGrasperBase::getAllPossibleNeedleGrasps(bool sort)
+{
+  simpleNeedleGraspGenerator_->graspGeneratorHelper(needleGraspData_, possible_grasps_, sort);
+  return possible_grasps_;
 }

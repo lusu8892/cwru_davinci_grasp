@@ -55,22 +55,19 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
   const std::string &get_planning_scene_service,
   const std::string &set_planning_scene_topic,
   const std::string &updated_needle_pose_topic)
-  : nh_(nh), nh_priv_(nh_priv), needle_name_(needle_name)
+  : DavinciNeedleGrasperBase(nh_priv, planning_group_name, ""), nh_(nh), needle_name_(needle_name)
 {
   ROS_INFO_STREAM_NAMED("DavinciSimpleNeedleGrasper", "Starting Simpling Needle Grasping");
-
-  // Get arm info from param server
-//  nh_priv_.param("ee_group_name", ee_group_name_, std::string("psm_one_gripper"));
-  nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
-
-  ROS_INFO_STREAM_NAMED("moveit_blocks", "End Effector: " << ee_group_name_);
-  ROS_INFO_STREAM_NAMED("moveit_blocks", "Planning Group: " << planning_group_name_);
 
   // Re-reate MoveGroup for one of the planning groups
   move_group_.reset(new moveit::planning_interface::MoveGroupInterface(planning_group_name_));
   move_group_->setPlanningTime(30.0);
 
-  ee_group_name_ = move_group_->getEndEffector();
+  if(ee_group_name_.empty())
+    ee_group_name_ = move_group_->getEndEffector();
+
+  ROS_INFO_STREAM_NAMED("moveit_blocks", "End Effector: " << ee_group_name_);
+  ROS_INFO_STREAM_NAMED("moveit_blocks", "Planning Group: " << planning_group_name_);
 
   // Load grasp generator
   davinciNeedleHandler_.reset(
@@ -79,10 +76,6 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
                                                                             ee_group_name_))->getLinkNames(),
                                                                           get_planning_scene_service,
                                                                           set_planning_scene_topic));
-  if (!needleGraspData_.loadRobotGraspData(nh_priv_, ee_group_name_))
-  {
-    ros::shutdown();
-  }
 
   // Load the Robot Viz Tools for publishing to rviz
   visual_tools_.reset(new moveit_visual_tools::MoveItVisualTools(needleGraspData_.base_link_));
@@ -352,12 +345,6 @@ bool DavinciSimpleNeedleGrasper::releaseNeedle(const std::string &needle_name,
 std::vector<moveit_msgs::Grasp> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGraspsList() const
 {
   return possible_grasps_msgs_;
-}
-
-std::vector<GraspInfo> DavinciSimpleNeedleGrasper::getAllPossibleNeedleGrasps(bool sort)
-{
-  simpleNeedleGraspGenerator_->graspGeneratorHelper(needleGraspData_, possible_grasps_, sort);
-  return possible_grasps_;
 }
 
 //moveit_msgs::Grasp DavinciSimpleNeedleGrasper::getDefinedNeedleGrasp()

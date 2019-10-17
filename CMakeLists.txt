@@ -136,6 +136,7 @@ include_directories(
 
 ## Declare a C++ library
 add_library(cwru_davinci_grasp
+  src/davinci_needle_grasper_base.cpp
   src/davinci_simple_needle_grasper.cpp
   src/davinci_needle_grasp_data.cpp
   src/davinci_simple_grasp_generator.cpp
@@ -173,7 +174,7 @@ add_dependencies(cwru_davinci_grasp ${PROJECT_NAME}_generate_messages_cpp)
 #target_link_libraries(davinci_simple_grasp_generator ${catkin_LIBRARIES})
 
 #target_link_libraries(davinci_simple_grasp_action_server ${catkin_LIBRARIES})
-target_link_libraries(cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(cwru_davinci_grasp ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_simple_needle_grasp_test_node cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_simple_needle_grasper_main cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_needle_pose_publisher ${catkin_LIBRARIES})

@@ -33,7 +33,7 @@
  *********************************************************************/
 
 /* Author: Su Lu <sxl924@case.edu>
-   Desc:   Grasp generator for generating simple grasping trajectory
+   Desc: Grasp generator for generating simple grasping trajectory
 */
 
 #ifndef CWRU_DAVINCI_GRASP_DAVINCI_SIMPLE_GRASP_GENERATOR_H
@@ -78,7 +78,7 @@ struct GraspInfo
 class DavinciSimpleGraspGenerator
 {
 public:
-  DavinciSimpleGraspGenerator(moveit_visual_tools::MoveItVisualToolsPtr visual_tools,
+  DavinciSimpleGraspGenerator(moveit_visual_tools::MoveItVisualToolsPtr visual_tools = nullptr,
                               bool verbose = false);
 
   ~DavinciSimpleGraspGenerator();
