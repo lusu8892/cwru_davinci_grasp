@@ -55,7 +55,7 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
   const std::string &get_planning_scene_service,
   const std::string &set_planning_scene_topic,
   const std::string &updated_needle_pose_topic)
-  : DavinciNeedleGrasperBase(nh_priv, planning_group_name, ""), nh_(nh), needle_name_(needle_name)
+  : DavinciNeedleGrasperBase(nh_priv, planning_group_name), nh_(nh), needle_name_(needle_name)
 {
   ROS_INFO_STREAM_NAMED("DavinciSimpleNeedleGrasper", "Starting Simpling Needle Grasping");
 
@@ -65,6 +65,11 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
 
   if(ee_group_name_.empty())
     ee_group_name_ = move_group_->getEndEffector();
+
+  if (!needleGraspData_.loadRobotGraspData(nh_priv_, ee_group_name_))
+  {
+    ros::shutdown();
+  }
 
   ROS_INFO_STREAM_NAMED("moveit_blocks", "End Effector: " << ee_group_name_);
   ROS_INFO_STREAM_NAMED("moveit_blocks", "Planning Group: " << planning_group_name_);
