@@ -110,13 +110,12 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 
   std::vector<GraspInfo> grasp_poses;
   graspGeneratorHelper(needleGraspData, grasp_poses, sort);
-  int grasp_id = 0;
-  for (const GraspInfo &grasp_pose : grasp_poses)
+  for (std::size_t i = 0; i < grasp_poses.size(); ++i)
   {
+    const GraspInfo grasp_pose = grasp_poses[i];
     moveit_msgs::Grasp new_grasp;
 
-    new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
-    ++grasp_id;
+    new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(i);
 
     // PreGrasp and Grasp Postures --------------------------------------------------------------------------
 
