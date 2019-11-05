@@ -110,13 +110,12 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 
   std::vector<GraspInfo> grasp_poses;
   graspGeneratorHelper(needleGraspData, grasp_poses, sort);
-  int grasp_id = 0;
-  for (const GraspInfo &grasp_pose : grasp_poses)
+  for (std::size_t i = 0; i < grasp_poses.size(); ++i)
   {
+    const GraspInfo grasp_pose = grasp_poses[i];
     moveit_msgs::Grasp new_grasp;
 
-    new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
-    ++grasp_id;
+    new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(i);
 
     // PreGrasp and Grasp Postures --------------------------------------------------------------------------
 
@@ -359,18 +358,18 @@ void DavinciSimpleGraspGenerator::graspGeneratorHelper(const DavinciNeedleGraspD
         }
       }
     }
-
-    double grasping_parameters[] = {needleGraspData.grasp_theta_0_, needleGraspData.grasp_theta_1_,
-                                    needleGraspData.grasp_theta_2_, needleGraspData.grasp_theta_3_};
-    GraspInfo normal_grasp;
-    calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, normal_grasp);
-    normal_grasp.graspParamInfo.grasp_id = grasp_pose.back().graspParamInfo.grasp_id + 1;
-    normal_grasp.theta_diff_avg = 0;
-    grasp_pose.push_back(normal_grasp);
-
-    if(sort)
-      std::sort(grasp_pose.begin(), grasp_pose.end());
   }
+
+  double grasping_parameters[] = {needleGraspData.grasp_theta_0_, needleGraspData.grasp_theta_1_,
+                                  needleGraspData.grasp_theta_2_, needleGraspData.grasp_theta_3_};
+  GraspInfo normal_grasp;
+  calNeedleToGripperPose(grasping_parameters, needleGraspData.needle_radius_, normal_grasp);
+  normal_grasp.graspParamInfo.grasp_id = grasp_pose.back().graspParamInfo.grasp_id + 1;
+  normal_grasp.theta_diff_avg = 0;
+  grasp_pose.push_back(normal_grasp);
+
+  if(sort)
+    std::sort(grasp_pose.begin(), grasp_pose.end());
 }
 
 void DavinciSimpleGraspGenerator::calNeedleToGripperPose(const double (&grasping_parameters)[4],

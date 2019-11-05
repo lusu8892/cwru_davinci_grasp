@@ -1,4 +1,4 @@
-base_link: 'world'  #this can be changed to any global reference frame
+base_link: 'davinci_endo_cam_l'  #this can be changed to any global reference frame
 
 needle_radius : 0.012
 
