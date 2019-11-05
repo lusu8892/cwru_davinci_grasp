@@ -241,7 +241,7 @@ int main(int argc, char **argv)
   node_handle_priv.getParam("grasp_pose_index", grasp_pose_index);
 
   geometry_msgs::PoseStamped needle_pose;
-  needle_pose.header.frame_id = "/world";
+  needle_pose.header.frame_id = "/davinci_endo_cam_l";
   needle_pose.header.stamp = ros::Time::now();
   needle_pose.pose.position.x = needle_pose_translation[0];
   needle_pose.pose.position.y = needle_pose_translation[1];
