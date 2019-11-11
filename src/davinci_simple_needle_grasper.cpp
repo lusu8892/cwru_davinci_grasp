@@ -149,6 +149,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
                                                                   plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
+        graspedJointPosition_ = move_group_->getCurrentJointValues();
         ROS_INFO("Object has been picked up");
         able_to_pick = true;
         return able_to_pick;
@@ -171,6 +172,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
                                                                    plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
+        graspedJointPosition_ = move_group_->getCurrentJointValues();
         ROS_INFO("Object has been picked up");
         able_to_pick = true;
         return able_to_pick;
@@ -191,6 +193,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
                                                                    plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
+        graspedJointPosition_ = move_group_->getCurrentJointValues();
         ROS_INFO("Object has been picked up");
         able_to_pick = true;
         return able_to_pick;
@@ -211,6 +214,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
                                                                plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
+        graspedJointPosition_ = move_group_->getCurrentJointValues();
         ROS_INFO("Object has been picked up");
         able_to_pick = true;
         return able_to_pick;

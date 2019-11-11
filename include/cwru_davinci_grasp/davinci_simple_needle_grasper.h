@@ -144,6 +144,11 @@ public:
 
   geometry_msgs::Transform getGraspTransform();
 
+  inline const std::vector<double>& graspedJointPosition() const
+  {
+    return graspedJointPosition_;
+  }
+
 private:
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
   std::string needle_name_;
@@ -185,6 +190,8 @@ private:
   GraspInfo selected_grasp_;
 
   GraspInfo defined_grasp_;
+
+  std::vector<double> graspedJointPosition_;
 
 private:
   /**
