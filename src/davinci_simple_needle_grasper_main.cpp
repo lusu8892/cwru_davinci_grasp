@@ -78,7 +78,7 @@ int main(int argc, char** argv)
   ros::NodeHandle node_handle_priv("~");
 
   ros::AsyncSpinner spinner(1);
-  ros::Duration(5.0).sleep();
+  ros::Duration(3.0).sleep();
   spinner.start();
 
   // class for publishing stuff to rviz

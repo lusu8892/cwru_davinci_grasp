@@ -1,8 +1,6 @@
-needle_pose_translation : [0.2, 0.05, 0.45]
+needle_pose_translation : [0.1, -0.02, 0.05]
 
 needle_pose_orientation : [0.0, 0.0, 0.0, 1.0]
-
-grasp_pose_index : 121
 ## =====================================================
 #psm_two_gripper:
 #    end_effector_name: 'psm_two_gripper'  #ee group name
