@@ -491,10 +491,10 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::tryPickNeedle(const ge
     for (std::size_t i = 0; i < possible_grasps_msgs.size(); ++i)
     {
       possible_grasps_msgs[i].allowed_touch_objects = allowed_touch_objects;
-      errorCode = move_group_->pick(needle_name, possible_grasps_msgs, plan_only);
+      errorCode = move_group_->pick(needle_name, possible_grasps_msgs[i], plan_only);
       if (errorCode.val = errorCode.SUCCESS)
       {
-        selected_grasp_.graspParamInfo.grasp_id = (int)possible_grasps_msgs[i].id[5];
+        selected_grasp_.graspParamInfo.grasp_id = i;
         return errorCode;
       }
     }

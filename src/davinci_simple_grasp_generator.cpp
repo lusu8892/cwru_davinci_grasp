@@ -63,7 +63,6 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
   std::vector<moveit_msgs::Grasp> &possible_grasp_msgs,
   bool sort)
 {
-  possible_grasp_msgs.clear();
   // ---------------------------------------------------------------------------------------------
   // first, transform from the object's frame (center of object) to /base_link
   geometry_msgs::PoseStamped _needle_pose = needle_pose;
@@ -110,6 +109,8 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 
   std::vector<GraspInfo> grasp_poses;
   graspGeneratorHelper(needleGraspData, grasp_poses, sort);
+  possible_grasp_msgs.clear();
+  possible_grasp_msgs.resize(grasp_poses.size());
   for (std::size_t i = 0; i < grasp_poses.size(); ++i)
   {
     const GraspInfo grasp_pose = grasp_poses[i];
@@ -171,7 +172,7 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
     new_grasp.post_grasp_retreat = post_grasp_retreat;
 
     // Add to vector
-    possible_grasp_msgs.push_back(new_grasp);
+    possible_grasp_msgs[i] = new_grasp;
   }
 
   ROS_INFO_STREAM_NAMED("grasp", "Generated " << possible_grasp_msgs.size() << " grasps.");
