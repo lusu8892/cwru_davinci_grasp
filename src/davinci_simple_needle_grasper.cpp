@@ -41,6 +41,7 @@
 
 #include <cwru_davinci_grasp/davinci_simple_needle_grasper.h>
 #include <moveit_msgs/GetPlanningScene.h>
+#include <std_srvs/SetBool.h>
 
 using namespace davinci_moveit_object_handling;
 
@@ -103,7 +104,6 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
 
   planning_scene_interface_.reset(new moveit::planning_interface::PlanningSceneInterface);
 
-
   ros::Duration(1.0).sleep();
 }
 
@@ -138,6 +138,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
     return able_to_pick;
   }
 
+  turnOnStickyFinger();
   switch (mode)
   {
     case NeedlePickMode::RANDOM:
@@ -151,6 +152,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
       {
         graspedJointPosition_ = move_group_->getCurrentJointValues();
         ROS_INFO("Object has been picked up");
+
         able_to_pick = true;
         return able_to_pick;
       }
@@ -618,9 +620,9 @@ bool DavinciSimpleNeedleGrasper::generateNeedleCollisionModel(
 
   bool able_to_generate = false;
 
-  Eigen::Vector3d scale_vec(0.025, 0.025, 0.025);
+  Eigen::Vector3d scale_vec(0.0254, 0.0254, 0.0254);
   shapes::Mesh* m =
-      shapes::createMeshFromResource("package://cwru_davinci_geometry_models/"
+      shapes::createMeshFromResource("package://sim_gazebo/"
                                      "props/needle_r/mesh/needle_r4.dae",
                                      scale_vec);
   ROS_INFO("needle mesh loaded");
@@ -724,6 +726,20 @@ bool DavinciSimpleNeedleGrasper::updateNeedleModel(const std::string &needle_nam
   }
 
   return true;
+}
+
+bool DavinciSimpleNeedleGrasper::turnOnStickyFinger
+(
+)
+{
+  ros::ServiceClient stickyFingerClient;
+  (planning_group_name_ == "psm_one") ?
+  stickyFingerClient = nh_.serviceClient<std_srvs::SetBool>("/sticky_finger/PSM1_tool_wrist_sca_ee_link_1") :
+  stickyFingerClient = nh_.serviceClient<std_srvs::SetBool>("/sticky_finger/PSM2_tool_wrist_sca_ee_link_1");
+
+  std_srvs::SetBool graspCommand;
+  graspCommand.request.data = true;
+  stickyFingerClient.call(graspCommand);
 }
 
 }  // namespace

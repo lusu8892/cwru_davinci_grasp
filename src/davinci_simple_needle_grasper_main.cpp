@@ -125,13 +125,15 @@ int main(int argc, char** argv)
     else if(pick_mode == 1)
     {
       // defined needle pick up
-      if(!needleGrasper.pickNeedle(NeedlePickMode::OPTIMAL, needle_name))
+      if(!needleGrasper.pickNeedle(NeedlePickMode::FINDGOOD, needle_name))
       {
-        ROS_INFO("Main function: failed to perform OPTIMAL needle pick up");
+        ROS_INFO("Main function: failed to perform FINDGOOD needle pick up");
         ros::shutdown();
         return 0;
       }
-      ROS_INFO("Main function: successfully performed OPTIMAL needle pick up");
+      ROS_INFO("Main function: successfully performed FINDGOOD needle pick up");
+      ROS_INFO("Main function: the selected grasp index is: %d",
+        needleGrasper.getSelectedGraspInfo().graspParamInfo.grasp_id);
     }
     else
     {

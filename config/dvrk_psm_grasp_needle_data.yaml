@@ -14,7 +14,7 @@ psm_one_gripper:
     pregrasp_time_from_start : 1.0
 
     #close position
-    grasp_posture : [0.1]  #define gripper jaw's close angle when hold object
+    grasp_posture : [0.0]  #define gripper jaw's close angle when hold object
     grasp_time_from_start : 1.0
 
     end_effector_parent_link: 'PSM1_tool_wrist_sca_shaft_link'
@@ -59,7 +59,7 @@ psm_two_gripper:
     pregrasp_time_from_start : 1.0
 
     #close position
-    grasp_posture : [0.262]  #define gripper jaw's close angle when hold object
+    grasp_posture : [0.0]  #define gripper jaw's close angle when hold object
     grasp_time_from_start : 1.0
 
     end_effector_parent_link: 'PSM2_tool_wrist_sca_shaft_link'
@@ -70,10 +70,13 @@ psm_two_gripper:
     theta_normal : [0.004, 0.0, 0.0, 0.0833]
 
     #grasping parameters limits
-    theta_limits : [0.002, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 3.1415]
+    #theta_limits : [0.003, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 2.97483]
+    theta_limits : [0.002, 0.004, 0.0, 0.0, -3.1415, 3.1415, 0.16667, 2.97483]
 
     #possible needle grasping search resolution
-    theta_resolution : [0.001, 1.03, 1.047, 0.4569]
+    #theta_resolution : [0.001, 1.03, 1.047, 0.4569]
+    theta_resolution : [0.001, 1.04716, 1.04716, 0.4569]
+    #theta_resolution : [0.001, 1.047 ,1.047, 0.628]
     #theta_resolution : [0.001, 0.4188 ,0.4188, 0.2094]
     #theta_resolution : [0.001, 0.2094, 0.1047, 0.2094]
 

@@ -305,6 +305,10 @@ private:
    */
   bool hasObject(const std::string &name,
                  const ObjsCheckMap &objsCheckMap);
+
+  bool turnOnStickyFinger
+  (
+  );
 };
 
 typedef boost::shared_ptr<DavinciSimpleNeedleGrasper> DavinciSimpleNeedleGrasperPtr;

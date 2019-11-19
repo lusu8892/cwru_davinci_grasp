@@ -39,6 +39,7 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <gazebo_msgs/GetModelState.h>
 
 int main(int argc, char** argv)
 {
@@ -47,6 +48,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle node_handle_priv("~");
 
+  ros::ServiceClient needle_model_pose_client = nh.serviceClient<gazebo_msgs::GetModelState>("/gazebo/get_model_state");
   ros::Publisher updated_needle_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/updated_needle_pose", 1000);
   ros::Rate loop_rate(1.0);
 
@@ -94,13 +96,17 @@ int main(int argc, char** argv)
   needle_pose.pose.orientation.z = needle_pose_orientation[2];
   needle_pose.pose.orientation.w = needle_pose_orientation[3];
 
+  gazebo_msgs::GetModelState needle_model_pose;
   while (ros::ok())
   {
+    needle_model_pose.request.model_name = "needle_r";
+    needle_model_pose.request.relative_entity_name = "davinci_endo_cam_l";
+    needle_model_pose_client.call(needle_model_pose);
+
+    needle_pose.pose = needle_model_pose.response.pose;
     updated_needle_pose_pub.publish(needle_pose);
     ros::spinOnce();
     loop_rate.sleep();
   }
   return 0;
 }
-
-
