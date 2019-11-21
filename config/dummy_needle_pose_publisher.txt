@@ -1,0 +1,1 @@
+rostopic pub -r 100 /updated_needle_pose geometry_msgs/PoseStamped  '{header: {frame_id: "/davinci_endo_cam_l"}, pose: {position: {x: 0.1, y: -0.02, z: 0.05}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}'
