@@ -102,6 +102,9 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
     ros::Duration(5.0).sleep();
   }
 
+  pick_up_action_sub_ = nh_.subscribe("/pickup/result", 100,
+                                      &DavinciSimpleNeedleGrasper::pickupActionCallBack, this);
+
   planning_scene_interface_.reset(new moveit::planning_interface::PlanningSceneInterface);
 
   ros::Duration(1.0).sleep();
@@ -150,10 +153,9 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
                                                                   plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
-        graspedJointPosition_ = move_group_->getCurrentJointValues();
+        able_to_pick = executePickupTraj();
+        m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
         ROS_INFO("Object has been picked up");
-
-        able_to_pick = true;
         return able_to_pick;
       }
       else
@@ -174,9 +176,9 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
                                                                    plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
-        graspedJointPosition_ = move_group_->getCurrentJointValues();
+        able_to_pick = executePickupTraj();
+        m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
         ROS_INFO("Object has been picked up");
-        able_to_pick = true;
         return able_to_pick;
       }
       else
@@ -195,9 +197,9 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
                                                                    plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
-        graspedJointPosition_ = move_group_->getCurrentJointValues();
+        able_to_pick = executePickupTraj();
+        m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
         ROS_INFO("Object has been picked up");
-        able_to_pick = true;
         return able_to_pick;
       }
       else
@@ -216,9 +218,9 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
                                                                plan_only);
       if (error_code.val == error_code.SUCCESS)
       {
-        graspedJointPosition_ = move_group_->getCurrentJointValues();
+        able_to_pick = executePickupTraj();
+        m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
         ROS_INFO("Object has been picked up");
-        able_to_pick = true;
         return able_to_pick;
       }
       else
@@ -669,11 +671,31 @@ bool DavinciSimpleNeedleGrasper::generateNeedleCollisionModel(
   return able_to_generate;
 }
 
-void DavinciSimpleNeedleGrasper::needlePoseCallBack(
-    const geometry_msgs::PoseStamped& needle_pose)
+void DavinciSimpleNeedleGrasper::needlePoseCallBack(const geometry_msgs::PoseStamped& needle_pose)
 {
   fresh_needle_pose_ = true;
   needle_pose_ = needle_pose;
+}
+
+void DavinciSimpleNeedleGrasper::pickupActionCallBack(const moveit_msgs::PickupActionResult& pickupResult)
+{
+  pickupTrajectories_.clear();
+  for (std::size_t i = 0; i < pickupResult.result.trajectory_stages.size(); ++i)
+  {
+    pickupTrajectories_.push_back(pickupResult.result.trajectory_stages[i].joint_trajectory);
+    if (i == 0 || i == 2)
+    {
+      double t = 0;
+      double time = 0.1;
+      for (std::size_t j = 0; j < pickupTrajectories_[i].points.size(); ++j)
+      {
+        pickupTrajectories_[i].points[j].time_from_start = ros::Duration(t);
+        t += time;
+      }
+    }
+  }
+
+  fresh_pickup_traj_ = true;
 }
 
 void DavinciSimpleNeedleGrasper::updateNeedlePose()
@@ -684,6 +706,17 @@ void DavinciSimpleNeedleGrasper::updateNeedlePose()
     ros::Duration(0.1).sleep();
   }
   fresh_needle_pose_ = false;  // reset to false
+  return;
+}
+
+void DavinciSimpleNeedleGrasper::updatePickupTraj()
+{
+  while (!fresh_pickup_traj_)
+  {
+    ros::spinOnce();
+    ros::Duration(0.1).sleep();
+  }
+  fresh_pickup_traj_ = false;  // reset to false
   return;
 }
 
@@ -740,6 +773,23 @@ bool DavinciSimpleNeedleGrasper::turnOnStickyFinger
   std_srvs::SetBool graspCommand;
   graspCommand.request.data = true;
   stickyFingerClient.call(graspCommand);
+}
+
+bool DavinciSimpleNeedleGrasper::executePickupTraj
+(
+)
+{
+  updatePickupTraj();
+  m_pSupportArmGroup.reset(new psm_interface(planning_group_name_, nh_));
+  for (std::size_t i = 0; i < pickupTrajectories_.size(); ++i)
+  {
+    if (!m_pSupportArmGroup->execute_trajectory(pickupTrajectories_[i]))
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace

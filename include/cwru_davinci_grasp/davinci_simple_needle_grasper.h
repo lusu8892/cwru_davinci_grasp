@@ -42,6 +42,8 @@
 #ifndef CWRU_DAVINCI_GRASP_DAVINCI_SIMPLE_NEEDLE_GRASPER_H
 #define CWRU_DAVINCI_GRASP_DAVINCI_SIMPLE_NEEDLE_GRASPER_H
 
+#include <cwru_davinci/uv_control/psm_interface.h>
+
 // include base header
 #include <cwru_davinci_grasp/davinci_needle_grasper_base.h>
 
@@ -53,6 +55,7 @@
 // MoveIt!
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
+#include <moveit_msgs/PickupActionResult.h>
 
 // Grasp generation
 #include <moveit_visual_tools/moveit_visual_tools.h> // simple tool for showing grasp
@@ -103,7 +106,7 @@ public:
                   const NeedlePickMode &mode,
                   GraspInfo &grasp_pose,
                   bool has_grasp_pose = false,
-                  bool plan_only = false);
+                  bool plan_only = true);
 
   /**
    * @brief release grasping of needle @param needle_name from planning scene
@@ -160,11 +163,17 @@ private:
   ros::Publisher moveit_planning_scene_diff_publisher_;
 
   ros::Subscriber needle_pose_sub_;
+  ros::Subscriber pick_up_action_sub_;
+
   geometry_msgs::PoseStamped needle_pose_;
 
   geometry_msgs::PoseStamped grasped_needle_pose_;
 
   moveit_msgs::CollisionObject needle_collision_model_;
+
+  PSMInterfacePtr m_pSupportArmGroup;
+
+  std::vector<trajectory_msgs::JointTrajectory> pickupTrajectories_;
 
   // interface to MoveIt
   boost::scoped_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
@@ -186,6 +195,8 @@ private:
   moveit_msgs::Grasp defined_grasp_msg_;
 
   bool fresh_needle_pose_ = false;
+
+  bool fresh_pickup_traj_ = false;
 
   GraspInfo selected_grasp_;
 
@@ -277,10 +288,14 @@ private:
    */
   void needlePoseCallBack(const geometry_msgs::PoseStamped& needle_pose);
 
+  void pickupActionCallBack(const moveit_msgs::PickupActionResult& pickupResult);
+
   /**
    * @brief update needle pose received from callback function
    */
   void updateNeedlePose();
+
+  void updatePickupTraj();
 
   /**
    * @brief Update needle's collision model in the planning scene
@@ -309,6 +324,8 @@ private:
   bool turnOnStickyFinger
   (
   );
+
+  bool executePickupTraj();
 };
 
 typedef boost::shared_ptr<DavinciSimpleNeedleGrasper> DavinciSimpleNeedleGrasperPtr;
