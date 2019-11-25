@@ -176,9 +176,9 @@ private:
   std::vector<trajectory_msgs::JointTrajectory> pickupTrajectories_;
 
   // interface to MoveIt
-  boost::scoped_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
+  std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
 
-  boost::scoped_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_;
+  std::unique_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_;
 
 //  planning_scene::PlanningScenePtr planning_scene_;
 
