@@ -95,7 +95,7 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
       get_planning_scene_service);
 
   needle_pose_sub_ =
-    nh_.subscribe(updated_needle_pose_topic, 100,
+    nh_.subscribe(updated_needle_pose_topic, 1,
                   &DavinciSimpleNeedleGrasper::needlePoseCallBack, this);
   if(needle_pose_sub_.getNumPublishers() < 1)
   {
@@ -307,6 +307,7 @@ const GraspInfo& DavinciSimpleNeedleGrasper::getSelectedGraspInfo() const
 
 geometry_msgs::PoseStamped DavinciSimpleNeedleGrasper::getNeedlePose()
 {
+  fresh_needle_pose_ = false;
   updateNeedlePose();
   return needle_pose_;
 }
@@ -725,6 +726,7 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
 {
   updatePickupTraj();
   m_pSupportArmGroup.reset(new psm_interface(planning_group_name_, nh_));
+  ros::Duration(1.0).sleep();
   ros::spinOnce();
   for (std::size_t i = 0; i < pickupTrajectories_.size(); ++i)
   {

@@ -10,7 +10,7 @@ psm_one_gripper:
     joints : ['PSM1_jaw']
 
     #open position
-    pregrasp_posture : [0.523]  #define gripper jaw's open angle
+    pregrasp_posture : [0.75]  #define gripper jaw's open angle
     pregrasp_time_from_start : 1.0
 
     #close position
@@ -55,7 +55,7 @@ psm_two_gripper:
     joints : ['PSM2_jaw']
 
     #open position
-    pregrasp_posture : [0.523]  #define gripper jaw's open angle
+    pregrasp_posture : [0.75]  #define gripper jaw's open angle
     pregrasp_time_from_start : 1.0
 
     #close position
