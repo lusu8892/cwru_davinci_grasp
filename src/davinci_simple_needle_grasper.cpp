@@ -441,7 +441,8 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::tryPickNeedle(const ge
     {
       possible_grasps_msgs[i].allowed_touch_objects = allowed_touch_objects;
       errorCode = move_group_->pick(needle_name, possible_grasps_msgs[i], plan_only);
-      if (errorCode.val = errorCode.SUCCESS)
+      ros::spinOnce();
+      if (errorCode.val == errorCode.SUCCESS)
       {
         selected_grasp_.graspParamInfo.grasp_id = i;
         return errorCode;
@@ -449,6 +450,7 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::tryPickNeedle(const ge
     }
   }
 
+  errorCode.val = errorCode.FAILURE;
   return errorCode;
 }
 
