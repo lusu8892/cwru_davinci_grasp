@@ -441,7 +441,8 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::tryPickNeedle(const ge
     {
       possible_grasps_msgs[i].allowed_touch_objects = allowed_touch_objects;
       errorCode = move_group_->pick(needle_name, possible_grasps_msgs[i], plan_only);
-      if (errorCode.val = errorCode.SUCCESS)
+      ros::spinOnce();
+      if (errorCode.val == errorCode.SUCCESS)
       {
         selected_grasp_.graspParamInfo.grasp_id = i;
         return errorCode;
@@ -449,6 +450,7 @@ moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::tryPickNeedle(const ge
     }
   }
 
+  errorCode.val = errorCode.FAILURE;
   return errorCode;
 }
 
@@ -634,8 +636,8 @@ void DavinciSimpleNeedleGrasper::pickupActionCallBack(const moveit_msgs::PickupA
       double time = 0.1;
       for (std::size_t j = 0; j < pickupTrajectories_[i].points.size(); ++j)
       {
-        pickupTrajectories_[i].points[j].time_from_start = ros::Duration(t);
         t += time;
+        pickupTrajectories_[i].points[j].time_from_start = ros::Duration(t);
       }
     }
   }
