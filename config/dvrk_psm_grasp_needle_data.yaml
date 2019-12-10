@@ -26,11 +26,11 @@ psm_one_gripper:
 
     #grasping parameters limits
     #theta_limits : [0.003, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 2.97483]
-    theta_limits : [0.002, 0.004, 0.0, 0.0, -3.1415, 3.1415, 0.16667, 2.97483]
+    theta_limits : [0.002, 0.002, 0.0, 0.0, -3.1415, -3.1415, 0.0, 3.1415]
 
     #possible needle grasping search resolution
     #theta_resolution : [0.001, 1.03, 1.047, 0.4569]
-    theta_resolution : [0.001, 1.04716, 1.04716, 0.4569]
+    theta_resolution : [0.001, 1.04716, 1.04716, 1.0472]
     #theta_resolution : [0.001, 1.047 ,1.047, 0.628]
     #theta_resolution : [0.001, 0.4188 ,0.4188, 0.2094]
     #theta_resolution : [0.001, 0.2094, 0.1047, 0.2094]
@@ -71,11 +71,11 @@ psm_two_gripper:
 
     #grasping parameters limits
     #theta_limits : [0.003, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 2.97483]
-    theta_limits : [0.002, 0.004, 0.0, 0.0, -3.1415, 3.1415, 0.16667, 2.97483]
+    theta_limits : [0.002, 0.002, 0.0, 0.0, -3.1415, -3.1415, 0.16667, 2.97483]
 
     #possible needle grasping search resolution
     #theta_resolution : [0.001, 1.03, 1.047, 0.4569]
-    theta_resolution : [0.001, 1.04716, 1.04716, 0.4569]
+    theta_resolution : [0.001, 1.04716, 1.04716, 0.936053333]
     #theta_resolution : [0.001, 1.047 ,1.047, 0.628]
     #theta_resolution : [0.001, 0.4188 ,0.4188, 0.2094]
     #theta_resolution : [0.001, 0.2094, 0.1047, 0.2094]

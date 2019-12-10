@@ -382,15 +382,15 @@ void DavinciSimpleGraspGenerator::calNeedleToGripperPose(const double (&grasping
   double theta_2 = grasping_parameters[2];
   double theta_3 = grasping_parameters[3];
 
-  if (theta_3 >= 0 && theta_3 <= 1.0472)
+  if (theta_3 >= 0 && theta_3 < 1.0472)
   {
     grasp_info.part_id = 0;
   }
-  else if(theta_3 > 1.0472 && theta_3 <= 2.0944)
+  else if(theta_3 >= 1.0472 && theta_3 < 2.0944)
   {
     grasp_info.part_id = 1;
   }
-  else if(theta_3 > 2.0944 && theta_3 < 3.1415)
+  else if(theta_3 >= 2.0944 && theta_3 < 3.1415)
   {
     grasp_info.part_id = 2;
   }
