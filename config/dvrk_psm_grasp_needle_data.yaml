@@ -37,9 +37,9 @@ psm_one_gripper:
 
     theta_weight : [1.0, 100.0, 0.1, 0.1]
 
-    approach_desired_dist : 0.008
+    approach_desired_dist : 0.015
 
-    approach_min_dist : 0.005
+    approach_min_dist : 0.012
 
     retreat_desired_dist: 0.0
 
