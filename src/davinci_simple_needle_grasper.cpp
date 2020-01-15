@@ -633,10 +633,12 @@ void DavinciSimpleNeedleGrasper::pickupActionCallBack(const moveit_msgs::PickupA
     if (i == 0 || i == 2)
     {
       double t = 0;
-      double time = 0.1;
+      double time = 0.2;
       for (std::size_t j = 0; j < pickupTrajectories_[i].points.size(); ++j)
       {
         t += time;
+        pickupTrajectories_[i].points[j].velocities.clear();
+        pickupTrajectories_[i].points[j].accelerations.clear();
         pickupTrajectories_[i].points[j].time_from_start = ros::Duration(t);
       }
     }
