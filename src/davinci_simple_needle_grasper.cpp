@@ -368,7 +368,6 @@ bool DavinciSimpleNeedleGrasper::removeNeedleFromPlanningScene(const std::string
     return is_removed;
   }
 
-
   objsCheckMap_ = planning_scene_interface_ -> getObjects();
   ObjsCheckMap::iterator objs_it = objsCheckMap_ .find(needle_name);
 
@@ -740,6 +739,44 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
     }
   }
   move_group_->attachObject(needle_name_);
+
+  const robot_state::RobotStatePtr pRobotState(new robot_state::RobotState(move_group_->getRobotModel()));
+  pRobotState->setToDefaultValues();
+  const moveit::core::LinkModel* pTipLink = pRobotState->getJointModelGroup(planning_group_name_)->getOnlyOneEndEffectorTip();
+  std::vector<double> jointPosition;
+  m_pSupportArmGroup->get_fresh_position(jointPosition);
+  pRobotState->setJointGroupPositions(planning_group_name_, jointPosition);
+  pRobotState->update();
+  Eigen::Affine3d toolTipPose = pRobotState->getGlobalLinkTransform(pTipLink);
+
+  toolTipPose.translation().z() += -0.01;
+  std::vector<robot_state::RobotStatePtr> traj;
+  double foundCartesianPath = pRobotState->computeCartesianPath(pRobotState->getJointModelGroup(planning_group_name_),
+                                                                traj,
+                                                                pTipLink,
+                                                                toolTipPose,
+                                                                true,
+                                                                0.001,
+                                                                0.0);
+
+  if (!((foundCartesianPath - 1.0) <= std::numeric_limits<double>::epsilon()))
+  {
+    return false;
+  }
+
+  std::vector<std::vector<double> > jntTrajectory(traj.size());
+
+  for (std::size_t i = 0; i < traj.size(); ++i)
+  {
+    traj[i]->copyJointGroupPositions(planning_group_name_, jntTrajectory[i]);
+  }
+
+  double jaw = 0.0; m_pSupportArmGroup->get_gripper_fresh_position(jaw);
+
+  if (!m_pSupportArmGroup->execute_trajectory(jntTrajectory, jaw, 5.0))
+  {
+    return false;
+  }
 
   return true;
 }
