@@ -728,7 +728,7 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
 )
 {
   updatePickupTraj();
-  m_pSupportArmGroup.reset(new psm_interface_calibration(planning_group_name_, nh_));
+  m_pSupportArmGroup.reset(new psm_interface(planning_group_name_, nh_));
   ros::Duration(1.0).sleep();
   ros::spinOnce();
   for (std::size_t i = 0; i < pickupTrajectories_.size(); ++i)
