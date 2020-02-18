@@ -773,7 +773,7 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
 
   double jaw = 0.0; m_pSupportArmGroup->get_gripper_fresh_position(jaw);
 
-  if (!m_pSupportArmGroup->execute_trajectory(jntTrajectory, jaw, 5.0))
+  if (!m_pSupportArmGroup->execute_trajectory_t(jntTrajectory, jaw, 5.0))
   {
     return false;
   }
