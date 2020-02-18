@@ -159,6 +159,7 @@ private:
   ros::NodeHandle nh_;
 
   ros::ServiceClient moveit_planning_scene_diff_client_;
+  ros::ServiceClient pf_grasp_client_;
 
   ros::Publisher moveit_planning_scene_diff_publisher_;
 

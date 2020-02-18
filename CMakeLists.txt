@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_visual_tools
   actionlib_msgs
   uv_control
+  uv_msgs
   )
 
 ## System dependencies are found with CMake's conventions
@@ -120,7 +121,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cwru_davinci_grasp
   CATKIN_DEPENDS roscpp std_msgs actionlib_msgs sensor_msgs geometry_msgs moveit_msgs trajectory_msgs moveit_visual_tools
-                cwru_davinci_moveit_object_handling
+                cwru_davinci_moveit_object_handling uv_msgs
   #  DEPENDS system_lib
 )
 

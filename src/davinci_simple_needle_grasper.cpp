@@ -42,6 +42,7 @@
 #include <cwru_davinci_grasp/davinci_simple_needle_grasper.h>
 #include <moveit_msgs/GetPlanningScene.h>
 #include <std_srvs/SetBool.h>
+#include <uv_msgs/pf_grasp.h>
 
 using namespace davinci_moveit_object_handling;
 
@@ -91,12 +92,15 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
     nh_.advertise<moveit_msgs::PlanningScene>(set_planning_scene_topic, 1);
 
   moveit_planning_scene_diff_client_ =
-    nh_.serviceClient<moveit_msgs::GetPlanningScene>(
-      get_planning_scene_service);
+    nh_.serviceClient<moveit_msgs::GetPlanningScene>(get_planning_scene_service);
+
+  pf_grasp_client_ = 
+    nh_.serviceClient<uv_msgs::pf_grasp>("/pf_grasp");
 
   needle_pose_sub_ =
     nh_.subscribe(updated_needle_pose_topic, 1,
                   &DavinciSimpleNeedleGrasper::needlePoseCallBack, this);
+
   if(needle_pose_sub_.getNumPublishers() < 1)
   {
     ros::Duration(5.0).sleep();
@@ -769,6 +773,16 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
   for (std::size_t i = 0; i < traj.size(); ++i)
   {
     traj[i]->copyJointGroupPositions(planning_group_name_, jntTrajectory[i]);
+  }
+
+  uv_msgs::pf_grasp pf_grasp_srv;
+  pf_grasp_srv.request.psm = m_pSupportArmGroup->get_psm();
+  tf::transformEigenToMsg(selected_grasp_.grasp_pose, pf_grasp_srv.request.grasp_transform);
+
+  if(!pf_grasp_client_.call(pf_grasp_srv))
+  {
+    ROS_WARN("Failed to call pf_grasp service.");
+    ros::spinOnce();
   }
 
   double jaw = 0.0; m_pSupportArmGroup->get_gripper_fresh_position(jaw);
