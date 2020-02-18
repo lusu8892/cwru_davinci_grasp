@@ -152,6 +152,8 @@ public:
     return graspedJointPosition_;
   }
 
+  bool compensationLinearMove(double z_dist, double time);
+
 private:
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
   std::string needle_name_;
