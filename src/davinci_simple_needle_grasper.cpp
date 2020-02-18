@@ -741,9 +741,31 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
     {
       return false;
     }
+    if (i == 2)
+    {
+      if (!compensationLinearMove(0.005, 3.0))
+      {
+        return false;
+      }
+    }
   }
   move_group_->attachObject(needle_name_);
 
+  uv_msgs::pf_grasp pf_grasp_srv;
+  pf_grasp_srv.request.psm = m_pSupportArmGroup->get_psm();
+  tf::transformEigenToMsg(selected_grasp_.grasp_pose, pf_grasp_srv.request.grasp_transform);
+
+  if(!pf_grasp_client_.call(pf_grasp_srv))
+  {
+    ROS_WARN("Failed to call pf_grasp service.");
+    ros::spinOnce();
+  }
+
+  return compensationLinearMove(-0.01, 5.0);
+}
+
+bool DavinciSimpleNeedleGrasper::compensationLinearMove(double z_dist, double time)
+{
   const robot_state::RobotStatePtr pRobotState(new robot_state::RobotState(move_group_->getRobotModel()));
   pRobotState->setToDefaultValues();
   const moveit::core::LinkModel* pTipLink = pRobotState->getJointModelGroup(planning_group_name_)->getOnlyOneEndEffectorTip();
@@ -753,7 +775,7 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
   pRobotState->update();
   Eigen::Affine3d toolTipPose = pRobotState->getGlobalLinkTransform(pTipLink);
 
-  toolTipPose.translation().z() += -0.01;
+  toolTipPose.translation().z() += z_dist;
   std::vector<robot_state::RobotStatePtr> traj;
   double foundCartesianPath = pRobotState->computeCartesianPath(pRobotState->getJointModelGroup(planning_group_name_),
                                                                 traj,
@@ -775,24 +797,12 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
     traj[i]->copyJointGroupPositions(planning_group_name_, jntTrajectory[i]);
   }
 
-  uv_msgs::pf_grasp pf_grasp_srv;
-  pf_grasp_srv.request.psm = m_pSupportArmGroup->get_psm();
-  tf::transformEigenToMsg(selected_grasp_.grasp_pose, pf_grasp_srv.request.grasp_transform);
-
-  if(!pf_grasp_client_.call(pf_grasp_srv))
-  {
-    ROS_WARN("Failed to call pf_grasp service.");
-    ros::spinOnce();
-  }
-
   double jaw = 0.0; m_pSupportArmGroup->get_gripper_fresh_position(jaw);
 
-  if (!m_pSupportArmGroup->execute_trajectory_t(jntTrajectory, jaw, 5.0))
+  if (!m_pSupportArmGroup->execute_trajectory_t(jntTrajectory, jaw, time))
   {
     return false;
   }
-
-  return true;
 }
 
 }  // namespace
