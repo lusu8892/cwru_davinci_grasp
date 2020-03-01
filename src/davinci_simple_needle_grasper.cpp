@@ -572,10 +572,10 @@ bool DavinciSimpleNeedleGrasper::generateNeedleCollisionModel(
 
   bool able_to_generate = false;
 
-  Eigen::Vector3d scale_vec(0.0254, 0.0254, 0.0254);
+  Eigen::Vector3d scale_vec(1.0, 1.0, 1.0);
   shapes::Mesh* m =
       shapes::createMeshFromResource("package://sim_gazebo/"
-                                     "props/needle_r/mesh/needle_r4.dae",
+                                     "props/needle_pf/mesh/needle_pf.dae",
                                      scale_vec);
   ROS_INFO("needle mesh loaded");
   shape_msgs::Mesh mesh;
@@ -743,9 +743,23 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
     }
     if (i == 2)
     {
-      if (!compensationLinearMove(0.003, 3.0))
+      char answer;
+      std::cout << "Do you want to move tool tip down (y/n)? ";
+      std::cin >> answer;
+      double okToMove = (answer == 'y') ? true : false;
+      while (okToMove)
       {
-        return false;
+        double moveDist = 0.0;
+        double time = 0.0;
+        std::cout << "How much further and time? ";
+        std::cin >> moveDist >> time;
+        if (!compensationLinearMove(moveDist, time))
+        {
+          return false;
+        }
+        std::cout << "Do you want to move tool tip down further (y/n)? ";
+        std::cin >> answer;
+        okToMove = (answer == 'y') ? true : false;
       }
     }
   }
@@ -753,7 +767,14 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
 
   uv_msgs::pf_grasp pf_grasp_srv;
   pf_grasp_srv.request.psm = m_pSupportArmGroup->get_psm();
-  tf::transformEigenToMsg(selected_grasp_.grasp_pose, pf_grasp_srv.request.grasp_transform);
+  geometry_msgs::Pose grasp_pose = possible_grasps_msgs_[selected_grasp_.graspParamInfo.grasp_id].grasp_pose.pose;
+  pf_grasp_srv.request.grasp_transform.rotation.w = grasp_pose.orientation.w;
+  pf_grasp_srv.request.grasp_transform.rotation.x = grasp_pose.orientation.x;
+  pf_grasp_srv.request.grasp_transform.rotation.y = grasp_pose.orientation.y;
+  pf_grasp_srv.request.grasp_transform.rotation.z = grasp_pose.orientation.z;
+  pf_grasp_srv.request.grasp_transform.translation.x = grasp_pose.position.x;
+  pf_grasp_srv.request.grasp_transform.translation.y = grasp_pose.position.y;
+  pf_grasp_srv.request.grasp_transform.translation.z = grasp_pose.position.z;
 
   if(!pf_grasp_client_.call(pf_grasp_srv))
   {
@@ -761,7 +782,7 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
     ros::spinOnce();
   }
 
-  return compensationLinearMove(-0.01, 5.0);
+  return compensationLinearMove(-0.015, 5.0);
 }
 
 bool DavinciSimpleNeedleGrasper::compensationLinearMove(double z_dist, double time)
