@@ -113,7 +113,6 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
   possible_grasp_msgs.resize(grasp_poses.size());
   for (std::size_t i = 0; i < grasp_poses.size(); ++i)
   {
-    const GraspInfo grasp_pose = grasp_poses[i];
     moveit_msgs::Grasp new_grasp;
 
     new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(i);
@@ -129,7 +128,7 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
     if (verbose_)
     {
       // Convert pose to global frame (base_link)
-      tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.grasp_pose.inverse(), grasp_pose_msg.pose);
+      tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_poses[i].grasp_pose.inverse(), grasp_pose_msg.pose);
       if(visual_tools_)
       {
         visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
@@ -138,11 +137,11 @@ bool DavinciSimpleGraspGenerator::generateSimpleNeedleGrasps(
 
     // ------------------------------------------------------------------------
     // Convert pose to global frame (base_link)
-    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose.grasp_pose.inverse(), grasp_pose_msg.pose);
+    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_poses[i].grasp_pose.inverse(), grasp_pose_msg.pose);
 
     // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
     new_grasp.grasp_pose = grasp_pose_msg;
-    new_grasp.grasp_quality = grasp_pose.theta_diff_avg;
+    new_grasp.grasp_quality = grasp_poses[i].theta_diff_avg;
     // Other ------------------------------------------------------------------------------------------------
 
     // the maximum contact force to use while grasping (<=0 to disable)

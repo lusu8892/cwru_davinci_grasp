@@ -10,5 +10,7 @@
 
     <node name="davinci_simple_needle_grasper_main" pkg="cwru_davinci_grasp" type="davinci_simple_needle_grasper_main" args="$(arg which_arm) $(arg needle_name) $(arg movement)" respawn="false" output="screen">
         <rosparam command="load" file="$(find cwru_davinci_grasp)/config/dvrk_psm_grasp_needle_data.yaml"/>
+        <param name="/planning_plugin" value="ompl_interface/OMPLPlanner"/>
+        <rosparam command="load" file="$(find cwru_davinci_dvrk_both_psms_moveit_config)/config/ompl_planning.yaml"/>
     </node>
 </launch>

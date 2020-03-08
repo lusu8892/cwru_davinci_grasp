@@ -55,8 +55,7 @@
 // MoveIt!
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
-#include <moveit_msgs/PickupActionResult.h>
-#include <moveit_msgs/PickupActionGoal.h>
+#include <moveit/pick_place/pick_place.h>
 
 // Grasp generation
 #include <moveit_visual_tools/moveit_visual_tools.h> // simple tool for showing grasp
@@ -105,9 +104,8 @@ public:
   bool pickNeedle(const geometry_msgs::PoseStamped &needle_pose,
                   const std::string &needle_name,
                   const NeedlePickMode &mode,
-                  GraspInfo &grasp_pose,
                   bool has_grasp_pose = false,
-                  bool plan_only = true);
+                  bool plan_only = false);
 
   /**
    * @brief release grasping of needle @param needle_name from planning scene
@@ -167,7 +165,6 @@ private:
   ros::Publisher moveit_planning_scene_diff_publisher_;
 
   ros::Subscriber needle_pose_sub_;
-  ros::Subscriber pick_up_action_sub_;
 
   geometry_msgs::PoseStamped needle_pose_;
 
@@ -177,7 +174,7 @@ private:
 
   PSMInterfacePtr m_pSupportArmGroup;
 
-  std::vector<trajectory_msgs::JointTrajectory> pickupTrajectories_;
+  std::vector<trajectory_msgs::JointTrajectory> graspTrajectories_;
 
   // interface to MoveIt
   std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
@@ -194,13 +191,9 @@ private:
 
   std::vector<moveit_msgs::Grasp> possible_grasps_msgs_;
 
-  std::vector<moveit_msgs::Grasp> feasible_grasps_msgs_;
-
   moveit_msgs::Grasp defined_grasp_msg_;
 
   bool fresh_needle_pose_ = false;
-
-  bool fresh_pickup_traj_ = false;
 
   GraspInfo selected_grasp_;
 
@@ -215,10 +208,15 @@ private:
  * @param needle_name
  * @return
  */
-  moveit_msgs::MoveItErrorCodes randomPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                 const std::string &needle_name,
-                                                 std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
-                                                 bool plan_only, bool sort = true);
+  bool randomPickNeedle
+  (
+  const geometry_msgs::PoseStamped& needle_pose,
+  const std::string& needle_name,
+  std::vector<moveit_msgs::Grasp>& possible_grasps_msgs,
+  bool plan_only,
+  bool sort = false,
+  const NeedlePickMode pickMode = NeedlePickMode::RANDOM
+  );
 
   /**
    * @brief pick up needle by user defined grasping parameter
@@ -226,22 +224,31 @@ private:
    * @param needle_name
    * @return
    */
-  moveit_msgs::MoveItErrorCodes definedPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                  const std::string &needle_name,
-                                                  moveit_msgs::Grasp &defined_grasp_msgs,
-                                                  GraspInfo &grasp_pose,
-                                                  bool has_grasp_pose = false,
-                                                  bool plan_only = false);
+  bool definedPickNeedle
+  (
+  const geometry_msgs::PoseStamped& needle_pose,
+  const std::string& needle_name,
+  moveit_msgs::Grasp& defined_grasp_msgs,
+  GraspInfo& grasp_pose,
+  bool plan_only,
+  bool has_grasp_pose = false
+  );
 
-  moveit_msgs::MoveItErrorCodes optimalPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                         const std::string &needle_name,
-                         std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
-                         bool plan_only, bool sort = true);
+  bool optimalPickNeedle
+  (
+  const geometry_msgs::PoseStamped& needle_pose,
+  const std::string& needle_name,
+  std::vector<moveit_msgs::Grasp>& possible_grasps_msgs,
+  bool plan_only
+  );
 
-  moveit_msgs::MoveItErrorCodes tryPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                              const std::string &needle_name,
-                                              std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
-                                              bool plan_only, bool sort = false);
+  bool tryPickNeedle
+  (
+  const geometry_msgs::PoseStamped& needle_pose,
+  const std::string& needle_name,
+  std::vector<moveit_msgs::Grasp>& possible_grasps_msgs,
+  bool plan_only
+  );
 
   /**
    * @brief helper function to place needle
@@ -292,14 +299,10 @@ private:
    */
   void needlePoseCallBack(const geometry_msgs::PoseStamped& needle_pose);
 
-  void pickupActionCallBack(const moveit_msgs::PickupActionResult& pickupResult);
-
   /**
    * @brief update needle pose received from callback function
    */
   void updateNeedlePose();
-
-  void updatePickupTraj();
 
   /**
    * @brief Update needle's collision model in the planning scene
@@ -331,8 +334,25 @@ private:
 
   bool executePickupTraj();
 
-  void constructGoal(moveit_msgs::PickupGoal& goal_out,
-                     const std::string& object);
+  void constructPickupGoal
+  (
+  const std::vector<moveit_msgs::Grasp>& possible_grasps_msgs,
+  const std::string& object,
+  moveit_msgs::PickupGoal& pickupGoal
+  );
+
+  bool planGraspPath
+  (
+  std::vector<moveit_msgs::Grasp>& possible_grasps_msgs,
+  const std::string& needle_name,
+  NeedlePickMode pickMode
+  );
+
+  void convertGraspPathToTrajectory
+  (
+  const std::vector<plan_execution::ExecutableTrajectory>& graspPath,
+  std::vector<trajectory_msgs::JointTrajectory>& graspTrajectory
+  );
 };
 
 typedef boost::shared_ptr<DavinciSimpleNeedleGrasper> DavinciSimpleNeedleGrasperPtr;

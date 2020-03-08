@@ -43,7 +43,6 @@
 #include <moveit_msgs/GetPlanningScene.h>
 #include <std_srvs/SetBool.h>
 #include <uv_msgs/pf_grasp.h>
-#include <moveit/pick_place/pick_place.h>
 
 using namespace davinci_moveit_object_handling;
 
@@ -107,9 +106,6 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
     ros::Duration(5.0).sleep();
   }
 
-  pick_up_action_sub_ = nh_.subscribe("/pickup/result", 100,
-                                      &DavinciSimpleNeedleGrasper::pickupActionCallBack, this);
-
   planning_scene_interface_.reset(new moveit::planning_interface::PlanningSceneInterface);
 
   ros::Duration(1.0).sleep();
@@ -117,13 +113,12 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
 
 bool DavinciSimpleNeedleGrasper::pickNeedle(const NeedlePickMode &mode, const std::string &needle_name)
 {
-  return pickNeedle(needle_pose_, needle_name, mode, defined_grasp_);
+  return pickNeedle(needle_pose_, needle_name, mode);
 }
 
 bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &needle_pose,
                                             const std::string &needle_name,
                                             const NeedlePickMode &mode,
-                                            GraspInfo &grasp_pose,
                                             bool has_grasp_pose,
                                             bool plan_only)
 {
@@ -151,12 +146,13 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
   {
     case NeedlePickMode::RANDOM:
     {
-      ROS_INFO("Robot is going to grasp needle with random grasping parameters");
-      moveit_msgs::MoveItErrorCodes error_code = randomPickNeedle(needle_pose,
-                                                                  needle_name,
-                                                                  possible_grasps_msgs_,
-                                                                  plan_only);
-      if (error_code.val == error_code.SUCCESS)
+      ROS_INFO("Robot is going to grasp needle in RANDOM mode");
+      able_to_pick = randomPickNeedle(needle_pose,
+                                      needle_name,
+                                      possible_grasps_msgs_,
+                                      plan_only);
+
+      if (able_to_pick && !plan_only)
       {
         able_to_pick = executePickupTraj();
         m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
@@ -165,22 +161,25 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
       }
       else
       {
-        ROS_INFO("Can not pick needle and the error code is %d", error_code.val);
+        ROS_INFO("Can not pick needle in RANDOM mode");
         return able_to_pick;
       }
     }
 
     case NeedlePickMode::DEFINED:
     {
-      ROS_INFO("Robot is going to grasp needle with user defined grasping parameters");
-      moveit_msgs::MoveItErrorCodes error_code = definedPickNeedle(needle_pose,
-                                                                   needle_name,
-                                                                   defined_grasp_msg_,
-                                                                   grasp_pose,
-                                                                   has_grasp_pose,
-                                                                   plan_only);
-      if (error_code.val == error_code.SUCCESS)
+      ROS_INFO("Robot is going to grasp needle in DEFINED mode");
+      able_to_pick = definedPickNeedle(needle_pose,
+                                       needle_name,
+                                       defined_grasp_msg_,
+                                       defined_grasp_,
+                                       plan_only,
+                                       has_grasp_pose
+                                       );
+
+      if (able_to_pick && !plan_only)
       {
+        selected_grasp_ = defined_grasp_;
         able_to_pick = executePickupTraj();
         m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
         ROS_INFO("Object has been picked up");
@@ -188,19 +187,20 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
       }
       else
       {
-        ROS_INFO("Can not pick needle and the error code is %d", error_code.val);
+        ROS_INFO("Can not pick needle in DEFINED mode");
         return able_to_pick;
       }
     }
 
     case NeedlePickMode::OPTIMAL:
     {
-      ROS_INFO("Robot is going to grasp needle with user defined grasping parameters");
-      moveit_msgs::MoveItErrorCodes error_code = optimalPickNeedle(needle_pose,
-                                                                   needle_name,
-                                                                   possible_grasps_msgs_,
-                                                                   plan_only);
-      if (error_code.val == error_code.SUCCESS)
+      ROS_INFO("Robot is going to grasp needle in OPTIMAL mode");
+      able_to_pick = optimalPickNeedle(needle_pose,
+                                       needle_name,
+                                       possible_grasps_msgs_,
+                                       plan_only);
+
+      if (able_to_pick && !plan_only)
       {
         able_to_pick = executePickupTraj();
         m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
@@ -209,19 +209,20 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
       }
       else
       {
-        ROS_INFO("Can not pick needle and the error code is %d", error_code.val);
+        ROS_INFO("Can not pick needle in OPTIMAL mode");
         return able_to_pick;
       }
     }
 
     case NeedlePickMode::FINDGOOD:
     {
-      ROS_INFO("Robot is going to grasp needle with user defined grasping parameters");
-      moveit_msgs::MoveItErrorCodes error_code = tryPickNeedle(needle_pose,
-                                                               needle_name,
-                                                               possible_grasps_msgs_,
-                                                               plan_only);
-      if (error_code.val == error_code.SUCCESS)
+      ROS_INFO("Robot is going to grasp needle in FINDGOOD mode");
+      able_to_pick = tryPickNeedle(needle_pose,
+                                   needle_name,
+                                   possible_grasps_msgs_,
+                                   plan_only);
+
+      if (able_to_pick && !plan_only)
       {
         able_to_pick = executePickupTraj();
         m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
@@ -230,7 +231,7 @@ bool DavinciSimpleNeedleGrasper::pickNeedle(const geometry_msgs::PoseStamped &ne
       }
       else
       {
-        ROS_INFO("Can not pick needle and the error code is %d", error_code.val);
+        ROS_INFO("Can not pick needle in FINDGOOD mode");
         return able_to_pick;
       }
     }
@@ -397,160 +398,164 @@ bool DavinciSimpleNeedleGrasper::removeNeedleFromPlanningScene(const std::string
   return is_removed;
 }
 
-moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::randomPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                                           const std::string &needle_name,
-                                                                           std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
-                                                                           bool plan_only, bool sort)
+bool DavinciSimpleNeedleGrasper::randomPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
+                                                  const std::string &needle_name,
+                                                  std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
+                                                  bool plan_only,
+                                                  bool sort,
+                                                  const NeedlePickMode pickMode)
 {
   possible_grasps_msgs.clear();
   // Pick grasp
   simpleNeedleGraspGenerator_->generateSimpleNeedleGrasps(needle_pose, needleGraspData_, possible_grasps_msgs, sort);
   needleGraspData_.print();
 
-  // Allow blocks to be touched by end effector
-  {
-    // an optional list of obstacles that we have semantic information about and that can be touched/pushed/moved in the course of grasping
-    std::vector<std::string> allowed_touch_objects;
-    allowed_touch_objects.push_back(needle_name);
-
-    // Add this list to all grasps
-    for (std::size_t i = 0; i < possible_grasps_msgs.size(); ++i)
-    {
-      possible_grasps_msgs[i].allowed_touch_objects = allowed_touch_objects;
-    }
-  }
-
-  planning_pipeline::PlanningPipelinePtr planning_pipeline(new planning_pipeline::PlanningPipeline(move_group_->getRobotModel(), nh_priv_));
-
-  pick_place::PickPlacePtr pPickPlace(new pick_place::PickPlace(planning_pipeline));
-
-  pick_place::PickPlanPtr pPickPlan(new pick_place::PickPlan(pPickPlace));
-  moveit_msgs::GetPlanningScene planningSceneMsgs;
-//  planningSceneMsgs.request.components.components = moveit_msgs::PlanningSceneComponents::SCENE_SETTINGS |
-//                                                    moveit_msgs::PlanningSceneComponents::ROBOT_STATE |
-//                                                    moveit_msgs::PlanningSceneComponents::WORLD_OBJECT_NAMES |
-//                                                    moveit_msgs::PlanningSceneComponents::WORLD_OBJECT_GEOMETRY;
-
-  moveit_planning_scene_diff_client_.call(planningSceneMsgs);
-  if(!moveit_planning_scene_diff_client_.call(planningSceneMsgs))
-  {
-    ROS_ERROR("DavinciSimpleNeedleGrasper: Can't obtain planning scene in order to attach object.");
-  }
-  planning_scene::PlanningScenePtr pPlanningScene(new planning_scene::PlanningScene(move_group_->getRobotModel()));
-  pPlanningScene->setPlanningSceneMsg(planningSceneMsgs.response.scene);
-
-  moveit_msgs::PickupGoal pickupGoal;
-  constructGoal(pickupGoal, needle_name);
-  pickupGoal.possible_grasps = possible_grasps_msgs;
-  pickupGoal.planning_options.plan_only = plan_only;
-  pickupGoal.planning_options.look_around = false;
-  pickupGoal.planning_options.replan = false;
-  pickupGoal.planning_options.replan_delay = 2.0;
-  pickupGoal.planning_options.planning_scene_diff.is_diff = true;
-  pickupGoal.planning_options.planning_scene_diff.robot_state.is_diff = true;
-
-  bool result = pPickPlan->plan(pPlanningScene, pickupGoal);
-
-  return move_group_->pick(needle_name, possible_grasps_msgs, plan_only);
+  return planGraspPath(possible_grasps_msgs, needle_name, pickMode);
 }
 
-moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::tryPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                                        const std::string &needle_name,
-                                                                        std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
-                                                                        bool plan_only, bool sort)
-{
-  possible_grasps_msgs.clear();
-  // Pick grasp
-  simpleNeedleGraspGenerator_->generateSimpleNeedleGrasps(needle_pose, needleGraspData_, possible_grasps_msgs, sort);
-  needleGraspData_.print();
-
-  // Allow blocks to be touched by end effector
-  moveit_msgs::MoveItErrorCodes errorCode;
-  // {
-    // an optional list of obstacles that we have semantic information about and that can be touched/pushed/moved in the course of grasping
-    std::vector<std::string> allowed_touch_objects;
-    allowed_touch_objects.push_back(needle_name);
-
-    planning_pipeline::PlanningPipelinePtr planning_pipeline(new planning_pipeline::PlanningPipeline(move_group_->getRobotModel(), move_group_->getNodeHandle(), "ompl_interface/OMPLPlanner"));
-
-    pick_place::PickPlacePtr pPickPlace(new pick_place::PickPlace(planning_pipeline));
-
-    pick_place::PickPlanPtr pPickPlan(new pick_place::PickPlan(pPickPlace));
-    moveit_msgs::GetPlanningScene planningSceneMsgs;
-    planningSceneMsgs.request.components.components = 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512;
-
-    moveit_planning_scene_diff_client_.call(planningSceneMsgs);
-    if(!moveit_planning_scene_diff_client_.call(planningSceneMsgs))
-    {
-      ROS_ERROR("DavinciSimpleNeedleGrasper: Can't obtain planning scene in order to attach object.");
-    }
-    planning_scene::PlanningScenePtr pPlanningScene(new planning_scene::PlanningScene(move_group_->getRobotModel()));
-    pPlanningScene->setPlanningSceneMsg(planningSceneMsgs.response.scene);
-
-    std::vector<bool> result;
-    // Add this list to all grasps
-    for (std::size_t i = 0; i < possible_grasps_msgs.size(); ++i)
-    {
-      possible_grasps_msgs[i].allowed_touch_objects = allowed_touch_objects;
-    }
-      moveit_msgs::PickupGoal pickupGoal;
-      constructGoal(pickupGoal, needle_name);
-      // pickupGoal.possible_grasps = std::vector<moveit_msgs::Grasp>(1, possible_grasps_msgs[i]);
-      pickupGoal.possible_grasps = possible_grasps_msgs;
-      pickupGoal.planning_options.plan_only = plan_only;
-      pickupGoal.planning_options.look_around = false;
-      pickupGoal.planning_options.replan = false;
-      pickupGoal.planning_options.replan_delay = 2.0;
-      pickupGoal.planning_options.planning_scene_diff.is_diff = true;
-      pickupGoal.planning_options.planning_scene_diff.robot_state.is_diff = true;
-
-      pPickPlan->plan(pPlanningScene, pickupGoal);
-
-//      errorCode = move_group_->pick(needle_name, possible_grasps_msgs[i], plan_only);
-//      ros::spinOnce();
-//      if (errorCode.val == errorCode.SUCCESS)
-//      {
-//        selected_grasp_.graspParamInfo.grasp_id = i;
-//        return errorCode;
-//      }
-    // }
-  // }
-
-  errorCode.val = errorCode.FAILURE;
-  return errorCode;
-}
-
-moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::definedPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                                                            const std::string &needle_name,
-                                                                            moveit_msgs::Grasp &defined_grasp_msgs,
-                                                                            GraspInfo &grasp_pose,
-                                                                            bool has_grasp_pose,
-                                                                            bool plan_only)
+bool DavinciSimpleNeedleGrasper::definedPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
+                                                   const std::string &needle_name,
+                                                   moveit_msgs::Grasp &defined_grasp_msgs,
+                                                   GraspInfo &grasp_pose,
+                                                   bool has_grasp_pose,
+                                                   bool plan_only)
 {
   // Pick grasp
   simpleNeedleGraspGenerator_->generateDefinedSimpleNeedleGrasp(needle_pose, needleGraspData_, defined_grasp_msgs,
                                                                 grasp_pose, has_grasp_pose);
   needleGraspData_.print();
-  // Allow blocks to be touched by end effector
-  {
-    // an optional list of obstacles that we have semantic information about and that can be touched/pushed/moved in the course of grasping
-    std::vector<std::string> allowed_touch_objects;
-    allowed_touch_objects.push_back(needle_name);
-
-    // Add this list to all grasps
-    defined_grasp_msgs.allowed_touch_objects = allowed_touch_objects;
-  }
-
-  return move_group_->pick(needle_name, defined_grasp_msgs, plan_only);
+  std::vector<moveit_msgs::Grasp> defined_grasp(1, defined_grasp_msgs);
+  return planGraspPath(defined_grasp, needle_name, NeedlePickMode::DEFINED);
 }
 
-moveit_msgs::MoveItErrorCodes
-DavinciSimpleNeedleGrasper::optimalPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
-                                              const std::string &needle_name,
-                                              std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
-                                              bool plan_only, bool sort)
+bool DavinciSimpleNeedleGrasper::optimalPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
+                                                   const std::string &needle_name,
+                                                   std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
+                                                   bool plan_only)
 {
-  return randomPickNeedle(needle_pose, needle_name, possible_grasps_msgs, plan_only, sort);
+  return randomPickNeedle(needle_pose, needle_name, possible_grasps_msgs, plan_only, true, NeedlePickMode::OPTIMAL);
+}
+
+bool DavinciSimpleNeedleGrasper::tryPickNeedle(const geometry_msgs::PoseStamped &needle_pose,
+                                               const std::string &needle_name,
+                                               std::vector<moveit_msgs::Grasp> &possible_grasps_msgs,
+                                               bool plan_only)
+{
+  return randomPickNeedle(needle_pose, needle_name, possible_grasps_msgs, plan_only, false, NeedlePickMode::FINDGOOD);
+}
+
+bool DavinciSimpleNeedleGrasper::planGraspPath(std::vector<moveit_msgs::Grasp>& possible_grasps_msgs,
+                                               const std::string& needle_name,
+                                               NeedlePickMode pickMode)
+{
+  planning_pipeline::PlanningPipelinePtr pPlanningPipeline(new planning_pipeline::PlanningPipeline(move_group_->getRobotModel(),  nh_priv_));
+  pick_place::PickPlacePtr pPickPlace(new pick_place::PickPlace(planning_pipeline::PlanningPipelinePtr(new planning_pipeline::PlanningPipeline(move_group_->getRobotModel(),  nh_priv_))));
+
+  moveit_msgs::GetPlanningScene planningSceneMsgs;
+  planningSceneMsgs.request.components.components = 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512;
+
+  moveit_planning_scene_diff_client_.call(planningSceneMsgs);
+  if (!moveit_planning_scene_diff_client_.call(planningSceneMsgs))
+  {
+    ROS_ERROR("DavinciSimpleNeedleGrasper: Can't obtain planning scene in order to attach object.");
+    return false;
+  }
+
+  planning_scene::PlanningScenePtr pPlanningScene(new planning_scene::PlanningScene(move_group_->getRobotModel()));
+  pPlanningScene->setPlanningSceneMsg(planningSceneMsgs.response.scene);
+
+  std::vector<std::string> allowed_touch_objects;
+  allowed_touch_objects.push_back(needle_name);
+
+  switch (pickMode)
+  {
+    case NeedlePickMode::OPTIMAL :
+      // continue to DEFIND
+    case NeedlePickMode::FINDGOOD :
+      // continue to DEFIND
+    case NeedlePickMode::DEFINED :
+      for (std::size_t i = 0; i < possible_grasps_msgs.size(); ++i)
+      {
+        possible_grasps_msgs[i].allowed_touch_objects = allowed_touch_objects;
+        moveit_msgs::PickupGoal pickupGoal;
+        constructPickupGoal(std::vector<moveit_msgs::Grasp>(1, possible_grasps_msgs[i]), needle_name, pickupGoal);
+
+        pick_place::PickPlanPtr pPickPlan = pPickPlace->planPick(pPlanningScene, pickupGoal);
+        if (pPickPlan)
+        {
+          pick_place::ManipulationPlanPtr pGoodPlan = pPickPlan->getSuccessfulManipulationPlans()[0];
+          if(!pGoodPlan)
+          {
+            return false;
+          }
+          std::vector<plan_execution::ExecutableTrajectory> graspPath = pGoodPlan->trajectories_;
+
+          convertGraspPathToTrajectory(graspPath, graspTrajectories_);
+
+          selected_grasp_.graspParamInfo.grasp_id = i;
+          ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)i);
+          ROS_INFO("Prepared to call debugger");
+          ros::Duration(10.0).sleep();
+          return true;
+        }
+      }
+      return false;
+    case NeedlePickMode::RANDOM :
+      for (std::size_t i = 0; i < possible_grasps_msgs.size(); ++i)
+      {
+        possible_grasps_msgs[i].allowed_touch_objects = allowed_touch_objects;
+      }
+      moveit_msgs::PickupGoal pickupGoal;
+      constructPickupGoal(possible_grasps_msgs, needle_name, pickupGoal);
+
+      pick_place::PickPlanPtr pPickPlan = pPickPlace->planPick(pPlanningScene, pickupGoal);
+      if (pPickPlan)
+      {
+        pick_place::ManipulationPlanPtr pGoodPlan = pPickPlan->getSuccessfulManipulationPlans()[0];
+        if(!pGoodPlan)
+        {
+          return false;
+        }
+        std::vector<plan_execution::ExecutableTrajectory> graspPath = pGoodPlan->trajectories_;
+
+        convertGraspPathToTrajectory(graspPath, graspTrajectories_);
+
+        selected_grasp_.graspParamInfo.grasp_id = pPickPlan->getSuccessfulManipulationPlans()[0]->id_;
+        ROS_INFO("Grasp Planning succeeded at %d th grasp pose", selected_grasp_.graspParamInfo.grasp_id);
+        ROS_INFO("Prepared to call debugger");
+        ros::Duration(10.0).sleep();
+        return true;
+      }
+
+      return false;
+  }
+
+}
+
+void DavinciSimpleNeedleGrasper::convertGraspPathToTrajectory
+(
+const std::vector<plan_execution::ExecutableTrajectory>& graspPath,
+std::vector<trajectory_msgs::JointTrajectory>& graspTrajectory
+)
+{
+  graspTrajectories_.clear();
+
+  for (std::size_t i = 0; i < graspPath.size(); ++i)
+  {
+    moveit_msgs::RobotTrajectory ithTraj;
+    graspPath[i].trajectory_->getRobotTrajectoryMsg(ithTraj);
+    graspTrajectories_.push_back(ithTraj.joint_trajectory);
+    double t = 0;
+    double time = 0.2;
+    for (std::size_t j = 0; j < graspTrajectories_[i].points.size(); ++j)
+    {
+      t += time;
+      graspTrajectories_[i].points[j].velocities.clear();
+      graspTrajectories_[i].points[j].accelerations.clear();
+      graspTrajectories_[i].points[j].time_from_start = ros::Duration(t);
+    }
+  }
+
 }
 
 moveit_msgs::MoveItErrorCodes DavinciSimpleNeedleGrasper::placeNeedleHelper(const geometry_msgs::Pose &needle_goal_pose,
@@ -690,29 +695,6 @@ void DavinciSimpleNeedleGrasper::needlePoseCallBack(const geometry_msgs::PoseSta
   needle_pose_ = needle_pose;
 }
 
-void DavinciSimpleNeedleGrasper::pickupActionCallBack(const moveit_msgs::PickupActionResult& pickupResult)
-{
-  pickupTrajectories_.clear();
-  for (std::size_t i = 0; i < pickupResult.result.trajectory_stages.size(); ++i)
-  {
-    pickupTrajectories_.push_back(pickupResult.result.trajectory_stages[i].joint_trajectory);
-    if (i == 0 || i == 2)
-    {
-      double t = 0;
-      double time = 0.2;
-      for (std::size_t j = 0; j < pickupTrajectories_[i].points.size(); ++j)
-      {
-        t += time;
-        pickupTrajectories_[i].points[j].velocities.clear();
-        pickupTrajectories_[i].points[j].accelerations.clear();
-        pickupTrajectories_[i].points[j].time_from_start = ros::Duration(t);
-      }
-    }
-  }
-
-  fresh_pickup_traj_ = true;
-}
-
 void DavinciSimpleNeedleGrasper::updateNeedlePose()
 {
   while (!fresh_needle_pose_)
@@ -721,17 +703,6 @@ void DavinciSimpleNeedleGrasper::updateNeedlePose()
     ros::Duration(0.1).sleep();
   }
   fresh_needle_pose_ = false;  // reset to false
-  return;
-}
-
-void DavinciSimpleNeedleGrasper::updatePickupTraj()
-{
-  while (!fresh_pickup_traj_)
-  {
-    ros::spinOnce();
-    ros::Duration(0.1).sleep();
-  }
-  fresh_pickup_traj_ = false;  // reset to false
   return;
 }
 
@@ -794,13 +765,12 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
 (
 )
 {
-  updatePickupTraj();
   m_pSupportArmGroup.reset(new psm_interface(planning_group_name_, nh_));
   ros::Duration(1.0).sleep();
   ros::spinOnce();
-  for (std::size_t i = 0; i < pickupTrajectories_.size(); ++i)
+  for (std::size_t i = 0; i < graspTrajectories_.size(); ++i)
   {
-    if (!m_pSupportArmGroup->execute_trajectory(pickupTrajectories_[i]))
+    if (!m_pSupportArmGroup->execute_trajectory(graspTrajectories_[i]))
     {
       return false;
     }
@@ -889,18 +859,28 @@ bool DavinciSimpleNeedleGrasper::compensationLinearMove(double z_dist, double ti
   }
 }
 
-void DavinciSimpleNeedleGrasper::constructGoal(moveit_msgs::PickupGoal& goal_out,
-                                               const std::string& object)
+void DavinciSimpleNeedleGrasper::constructPickupGoal
+(
+const std::vector<moveit_msgs::Grasp>& possible_grasps_msgs,
+const std::string& object,
+moveit_msgs::PickupGoal& pickupGoal
+)
 {
   moveit_msgs::PickupGoal goal;
-  goal.target_name = object;
-  goal.group_name = planning_group_name_;
-  goal.end_effector = ee_group_name_;
-  goal.allowed_planning_time = move_group_->getPlanningTime();
-  goal.planner_id = move_group_->getPlannerId();
-  goal.allow_gripper_support_collision = true;
+  pickupGoal.target_name = object;
+  pickupGoal.group_name = planning_group_name_;
+  pickupGoal.end_effector = ee_group_name_;
+  pickupGoal.allowed_planning_time = move_group_->getPlanningTime();
+  pickupGoal.planner_id = move_group_->getPlannerId();
+  pickupGoal.allow_gripper_support_collision = true;
 
-  goal_out = goal;
+  pickupGoal.possible_grasps = possible_grasps_msgs;
+  pickupGoal.planning_options.plan_only = true;
+  pickupGoal.planning_options.look_around = false;
+  pickupGoal.planning_options.replan = false;
+  pickupGoal.planning_options.replan_delay = 2.0;
+  pickupGoal.planning_options.planning_scene_diff.is_diff = true;
+  pickupGoal.planning_options.planning_scene_diff.robot_state.is_diff = true;
 }
 
 }  // namespace
