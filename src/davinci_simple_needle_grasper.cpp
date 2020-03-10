@@ -108,6 +108,11 @@ DavinciSimpleNeedleGrasper::DavinciSimpleNeedleGrasper(
 
   planning_scene_interface_.reset(new moveit::planning_interface::PlanningSceneInterface);
 
+  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor("robot_description"));
+  planning_scene_monitor_->startSceneMonitor();
+  planning_scene_monitor_->startWorldGeometryMonitor();
+  planning_scene_monitor_->startStateMonitor();
+
   ros::Duration(1.0).sleep();
 }
 
@@ -448,24 +453,14 @@ bool DavinciSimpleNeedleGrasper::planGraspPath(std::vector<moveit_msgs::Grasp>& 
                                                const std::string& needle_name,
                                                NeedlePickMode pickMode)
 {
-  planning_pipeline::PlanningPipelinePtr pPlanningPipeline(new planning_pipeline::PlanningPipeline(move_group_->getRobotModel(),  nh_priv_));
-  pick_place::PickPlacePtr pPickPlace(new pick_place::PickPlace(planning_pipeline::PlanningPipelinePtr(new planning_pipeline::PlanningPipeline(move_group_->getRobotModel(),  nh_priv_))));
-
-  moveit_msgs::GetPlanningScene planningSceneMsgs;
-  planningSceneMsgs.request.components.components = 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512;
-
-  moveit_planning_scene_diff_client_.call(planningSceneMsgs);
-  if (!moveit_planning_scene_diff_client_.call(planningSceneMsgs))
-  {
-    ROS_ERROR("DavinciSimpleNeedleGrasper: Can't obtain planning scene in order to attach object.");
-    return false;
-  }
-
-  planning_scene::PlanningScenePtr pPlanningScene(new planning_scene::PlanningScene(move_group_->getRobotModel()));
-  pPlanningScene->setPlanningSceneMsg(planningSceneMsgs.response.scene);
+  planning_pipeline::PlanningPipelinePtr planning_pipeline(new planning_pipeline::PlanningPipeline(planning_scene_monitor_->getRobotModel()));
+  pPickPlace_.reset(new pick_place::PickPlace(planning_pipeline));
 
   std::vector<std::string> allowed_touch_objects;
   allowed_touch_objects.push_back(needle_name);
+  planning_scene_monitor_->waitForCurrentRobotState(ros::Time::now());
+  planning_scene_monitor_->updateFrameTransforms();
+  planning_scene_monitor::LockedPlanningSceneRO lockedPS(planning_scene_monitor_);
 
   switch (pickMode)
   {
@@ -480,20 +475,24 @@ bool DavinciSimpleNeedleGrasper::planGraspPath(std::vector<moveit_msgs::Grasp>& 
         moveit_msgs::PickupGoal pickupGoal;
         constructPickupGoal(std::vector<moveit_msgs::Grasp>(1, possible_grasps_msgs[i]), needle_name, pickupGoal);
 
-        pick_place::PickPlanPtr pPickPlan = pPickPlace->planPick(pPlanningScene, pickupGoal);
+        pick_place::PickPlanPtr pPickPlan = pPickPlace_->planPick(lockedPS, pickupGoal);
         if (!pPickPlan || pPickPlan->getSuccessfulManipulationPlans().empty())
         {
           continue;
         }
+
         pick_place::ManipulationPlanPtr pGoodPlan = pPickPlan->getSuccessfulManipulationPlans()[0];
         if (!pGoodPlan)
         {
           continue;
         }
 
+        pPickPlace_->displayComputedMotionPlans(true);
+        pPickPlace_->visualizePlan(pGoodPlan);
         std::vector<plan_execution::ExecutableTrajectory> graspPath = pGoodPlan->trajectories_;
         convertGraspPathToTrajectory(graspPath, graspTrajectories_);
         selected_grasp_.graspParamInfo.grasp_id = i;
+
         ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)i);
         ROS_INFO("Prepared to call debugger");
         ros::Duration(10.0).sleep();
@@ -507,22 +506,24 @@ bool DavinciSimpleNeedleGrasper::planGraspPath(std::vector<moveit_msgs::Grasp>& 
       }
       moveit_msgs::PickupGoal pickupGoal;
       constructPickupGoal(possible_grasps_msgs, needle_name, pickupGoal);
-
-      pick_place::PickPlanPtr pPickPlan = pPickPlace->planPick(pPlanningScene, pickupGoal);
+      pick_place::PickPlanPtr pPickPlan = pPickPlace_->planPick(lockedPS, pickupGoal);
       if (!pPickPlan || pPickPlan->getSuccessfulManipulationPlans().empty())
       {
         return false;
       }
+
       pick_place::ManipulationPlanPtr pGoodPlan = pPickPlan->getSuccessfulManipulationPlans()[0];
       if(!pGoodPlan)
       {
         return false;
       }
+
+      pPickPlace_->displayComputedMotionPlans(true);
+      pPickPlace_->visualizePlan(pGoodPlan);
       std::vector<plan_execution::ExecutableTrajectory> graspPath = pGoodPlan->trajectories_;
-
       convertGraspPathToTrajectory(graspPath, graspTrajectories_);
-
       selected_grasp_.graspParamInfo.grasp_id = pPickPlan->getSuccessfulManipulationPlans()[0]->id_;
+
       ROS_INFO("Grasp Planning succeeded at %d th grasp pose", selected_grasp_.graspParamInfo.grasp_id);
       ROS_INFO("Prepared to call debugger");
       ros::Duration(10.0).sleep();

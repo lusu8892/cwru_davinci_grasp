@@ -181,8 +181,6 @@ private:
 
   std::unique_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_;
 
-//  planning_scene::PlanningScenePtr planning_scene_;
-
   ObjsCheckMap objsCheckMap_;
 
   AttachedObjsCheckMap attachedObjsCheckMap_;
@@ -200,6 +198,10 @@ private:
   GraspInfo defined_grasp_;
 
   std::vector<double> graspedJointPosition_;
+
+  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
+
+  pick_place::PickPlacePtr pPickPlace_;
 
 private:
   /**
