@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   needle_pose.pose.orientation.y = 0;
   needle_pose.pose.orientation.z = 0;
 
-  needleGrasper.pickNeedle(needle_pose, "needle_r", cwru_davinci_grasp::NeedlePickMode::DEFINED,
+  needleGrasper.pickNeedle("needle_r", needle_pose, cwru_davinci_grasp::NeedlePickMode::DEFINED,
                            false, false);
 
 

@@ -114,7 +114,7 @@ int main(int argc, char** argv)
     if (pick_mode == 0)
     {
       // defined needle pick up
-      if(!needleGrasper.pickNeedle(NeedlePickMode::DEFINED, needle_name))
+      if(!needleGrasper.pickNeedle(needle_name, NeedlePickMode::DEFINED))
       {
         ROS_INFO("Main function: failed to perform DEFINED needle pick up");
         ros::shutdown();
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     else if(pick_mode == 1)
     {
       // defined needle pick up
-      if(!needleGrasper.pickNeedle(NeedlePickMode::OPTIMAL, needle_name))
+      if(!needleGrasper.pickNeedle(needle_name, NeedlePickMode::OPTIMAL))
       {
         ROS_INFO("Main function: failed to perform OPTIMAL needle pick up");
         ros::shutdown();
@@ -138,7 +138,7 @@ int main(int argc, char** argv)
     else if(pick_mode == 2)
     {
       // defined needle pick up
-      if(!needleGrasper.pickNeedle(NeedlePickMode::FINDGOOD, needle_name))
+      if(!needleGrasper.pickNeedle(needle_name, NeedlePickMode::FINDGOOD))
       {
         ROS_INFO("Main function: failed to perform FINDGOOD needle pick up");
         ros::shutdown();
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
     else
     {
       // random needle pick up
-      if (!needleGrasper.pickNeedle(NeedlePickMode::RANDOM, needle_name))
+      if (!needleGrasper.pickNeedle(needle_name, NeedlePickMode::RANDOM))
       {
         ROS_INFO("Main function: failed to perform RANDOM needle pick up");
         ros::shutdown();
@@ -178,7 +178,7 @@ int main(int argc, char** argv)
     needle_pose_goal.position.y = y;
     needle_pose_goal.position.z = z;
 
-    if(!needleGrasper.placeNeedle(needle_pose_goal, needle_name))
+    if(!needleGrasper.placeNeedle(needle_name, needle_pose_goal, false))
     {
       ROS_INFO("Main function: failed to place needle");
       ros::shutdown();

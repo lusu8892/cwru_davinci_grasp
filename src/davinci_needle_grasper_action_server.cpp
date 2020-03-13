@@ -121,7 +121,7 @@ int DavinciNeedleGrasperActionServer::executeNeedleMove(
   if (action == "pick")
   {
     if (way_to_pick == "DEFINED")
-      if (needleGrasper_->pickNeedle(NeedlePickMode::DEFINED, object_name))
+      if (needleGrasper_->pickNeedle(object_name, NeedlePickMode::DEFINED))
       {
         able_to_execute = 1;
         return able_to_execute;
@@ -133,7 +133,7 @@ int DavinciNeedleGrasperActionServer::executeNeedleMove(
       }
     else if (way_to_pick == "RANDOM")
     {
-      if (needleGrasper_->pickNeedle(NeedlePickMode::RANDOM, object_name))
+      if (needleGrasper_->pickNeedle(object_name, NeedlePickMode::RANDOM))
       {
         able_to_execute = 2;
         return able_to_execute;
