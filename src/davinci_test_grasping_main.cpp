@@ -63,8 +63,8 @@ moveit_msgs::AttachedCollisionObject generateNeedleCollisionModel(const geometry
 {
   Eigen::Vector3d scale_vec(0.025, 0.025, 0.025);
   shapes::Mesh* m =
-      shapes::createMeshFromResource("package://cwru_davinci_geometry_models/"
-                                     "props/needle_r/mesh/needle_r4.dae",
+      shapes::createMeshFromResource("package://sim_gazebo/"
+                                     "props/needle_pf/mesh/needle_pf.dae",
                                      scale_vec);
   ROS_INFO("needle mesh loaded");
   shape_msgs::Mesh mesh;
