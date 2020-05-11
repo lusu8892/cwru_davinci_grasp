@@ -40,6 +40,32 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <gazebo_msgs/GetModelState.h>
+#include <gazebo_state_plugins/GazeboObjectInfo.h>
+
+class DummyNeedleTracker : public gazebo::GazeboObjectInfo
+{
+public :
+  DummyNeedleTracker();
+
+  virtual ~DummyNeedleTracker(){};
+
+  void setNeedlePose();
+
+  void getNeedlePose();
+};
+
+DummyNeedleTracker::DummyNeedleTracker() : gazebo::GazeboObjectInfo()
+{}
+
+void DummyNeedleTracker::setNeedlePose()
+{
+  return;
+}
+
+void DummyNeedleTracker::getNeedlePose()
+{
+  return;
+}
 
 int main(int argc, char** argv)
 {

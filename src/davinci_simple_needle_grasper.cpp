@@ -513,7 +513,7 @@ const NeedlePickMode pickMode
 
         ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)i);
         ROS_INFO("Prepared to call debugger");
-        ros::Duration(10.0).sleep();
+        ros::Duration(1.0).sleep();
         return true;
       }
       return false;
@@ -544,7 +544,7 @@ const NeedlePickMode pickMode
 
       ROS_INFO("Grasp Planning succeeded at %d th grasp pose", selected_grasp_.graspParamInfo.grasp_id);
       ROS_INFO("Prepared to call debugger");
-      ros::Duration(10.0).sleep();
+      ros::Duration(1.0).sleep();
       return true;
   }
 }
@@ -705,7 +705,7 @@ bool DavinciSimpleNeedleGrasper::generateNeedleCollisionModel(
   Eigen::Vector3d scale_vec(1.0, 1.0, 1.0);
   shapes::Mesh* m =
       shapes::createMeshFromResource("package://sim_gazebo/"
-                                     "props/needle_pf/mesh/needle_pf.dae",
+                                     "props/needle/mesh/needle_thin.dae",
                                      scale_vec);
   ROS_INFO("needle mesh loaded");
   shape_msgs::Mesh mesh;
@@ -978,6 +978,8 @@ bool DavinciSimpleNeedleGrasper::compensationLinearMove(double z_dist, double ti
   {
     return false;
   }
+
+  return true;
 }
 
 void DavinciSimpleNeedleGrasper::constructPickupGoal

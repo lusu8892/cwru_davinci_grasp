@@ -6,7 +6,7 @@
     <arg name = "needle_name" default = "needle_r"/>
 
     # specify to pick or place needle
-    <arg name = "movement" default = "place"/>
+    <arg name = "movement" default = "pick"/>
 
     <node name="davinci_simple_needle_grasper_main" pkg="cwru_davinci_grasp" type="davinci_simple_needle_grasper_main" args="$(arg which_arm) $(arg needle_name) $(arg movement)" respawn="false" output="screen">
         <rosparam command="load" file="$(find cwru_davinci_grasp)/config/dvrk_psm_grasp_needle_data.yaml"/>

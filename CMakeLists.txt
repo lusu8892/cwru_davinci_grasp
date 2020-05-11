@@ -24,7 +24,10 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   uv_control
   uv_msgs
+  gazebo_state_plugins
   )
+
+find_package(gazebo REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -121,8 +124,8 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cwru_davinci_grasp
   CATKIN_DEPENDS roscpp std_msgs actionlib_msgs sensor_msgs geometry_msgs moveit_msgs trajectory_msgs moveit_visual_tools
-                cwru_davinci_moveit_object_handling uv_msgs
-  #  DEPENDS system_lib
+                cwru_davinci_moveit_object_handling uv_msgs gazebo_state_plugins
+  # DEPENDS
 )
 
 ###########
@@ -134,6 +137,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${GAZEBO_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -179,7 +183,7 @@ add_dependencies(cwru_davinci_grasp ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(cwru_davinci_grasp ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_simple_needle_grasp_test_node cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_simple_needle_grasper_main cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(davinci_needle_pose_publisher ${catkin_LIBRARIES})
+target_link_libraries(davinci_needle_pose_publisher ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(davinci_test_grasping_main cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_needle_grasper_action_server_main cwru_davinci_grasp ${catkin_LIBRARIES})
 target_link_libraries(davinci_grasp_info_writer cwru_davinci_grasp ${catkin_LIBRARIES})
