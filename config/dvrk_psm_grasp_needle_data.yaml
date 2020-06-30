@@ -1,6 +1,6 @@
 base_link: 'davinci_endo_cam_l'  #this can be changed to any global reference frame
 
-needle_radius : 0.012
+needle_radius : 0.0125
 
 # =====================================================
 psm_one_gripper:
@@ -22,11 +22,11 @@ psm_one_gripper:
     end_effector_tool_tip_link: 'PSM1_tool_tip_link'
 
     #normal needle grasping parameters
-    theta_normal : [0.005, 0.0, 0.0, 0.0833]
+    theta_normal : [0.003, 0.0, 0.0, 0.0833]
 
     #grasping parameters limits
     #theta_limits : [0.003, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 2.97483]
-    theta_limits : [0.004, 0.006, 0.0, 0.0, -3.1415, 3.1415, 0.16667, 2.97483]
+    theta_limits : [0.002, 0.004, 0.0, 0.0, -3.1415, 3.1415, 0.16667, 2.97483]
 
     #possible needle grasping search resolution
     #theta_resolution : [0.001, 1.03, 1.047, 0.4569]
@@ -37,9 +37,9 @@ psm_one_gripper:
 
     theta_weight : [1.0, 100.0, 0.1, 0.1]
 
-    approach_desired_dist : 0.010
+    approach_desired_dist : 0.015
 
-    approach_min_dist : 0.005
+    approach_min_dist : 0.010
 
     retreat_desired_dist: 0.0
 

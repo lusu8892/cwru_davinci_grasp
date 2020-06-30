@@ -36,10 +36,13 @@
 
 using namespace cwru_davinci_grasp;
 
-DavinciNeedleGrasperBase::DavinciNeedleGrasperBase(const ros::NodeHandle &nh_priv,
-                                                   const std::string &planning_group_name,
-                                                   const std::string &ee_group_name)
-                                                   : nh_priv_(nh_priv)
+DavinciNeedleGrasperBase::DavinciNeedleGrasperBase
+(
+const ros::NodeHandle &nh_priv,
+const std::string &planning_group_name,
+const std::string &ee_group_name
+)
+: nh_priv_(nh_priv)
 {
   nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
   nh_priv_.param("ee_group_name", ee_group_name_, ee_group_name);
@@ -52,14 +55,20 @@ DavinciNeedleGrasperBase::DavinciNeedleGrasperBase(const ros::NodeHandle &nh_pri
   simpleNeedleGraspGenerator_.reset(new cwru_davinci_grasp::DavinciSimpleGraspGenerator());
 }
 
-DavinciNeedleGrasperBase::DavinciNeedleGrasperBase(const ros::NodeHandle &nh_priv,
-                                                   const std::string &planning_group_name)
+DavinciNeedleGrasperBase::DavinciNeedleGrasperBase
+(
+const ros::NodeHandle &nh_priv,
+const std::string &planning_group_name
+)
 : nh_priv_(nh_priv)
 {
   nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
 }
 
-std::vector<GraspInfo> DavinciNeedleGrasperBase::getAllPossibleNeedleGrasps(bool sort)
+const std::vector<GraspInfo>& DavinciNeedleGrasperBase::getAllPossibleNeedleGrasps
+(
+bool sort
+)
 {
   simpleNeedleGraspGenerator_->graspGeneratorHelper(needleGraspData_, possible_grasps_, sort);
   return possible_grasps_;

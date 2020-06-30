@@ -77,13 +77,16 @@ private:
   typedef std::map<std::string, moveit_msgs::AttachedCollisionObject> AttachedObjsCheckMap;
 
 public:
-  DavinciSimpleNeedleGrasper(const ros::NodeHandle &nh,
-                             const ros::NodeHandle &nh_priv,
-                             const std::string &planning_group_name,
-                             const std::string &needle_name = "needle_r",
-                             const std::string &get_planning_scene_service = "/get_planning_scene",
-                             const std::string &set_planning_scene_topic = "/planning_scene",
-                             const std::string &updated_needle_pose_topic = "/updated_needle_pose");
+  DavinciSimpleNeedleGrasper
+  (
+  const ros::NodeHandle &nh,
+  const ros::NodeHandle &nh_priv,
+  const std::string &planning_group_name,
+  const std::string &needle_name = "needle_r",
+  const std::string &get_planning_scene_service = "/get_planning_scene",
+  const std::string &set_planning_scene_topic = "/planning_scene",
+  const std::string &updated_needle_pose_topic = "/updated_needle_pose"
+  );
 
   virtual ~DavinciSimpleNeedleGrasper(){}
 
@@ -110,7 +113,6 @@ public:
   const std::string& needle_name,
   const geometry_msgs::PoseStamped& needle_pose,
   const NeedlePickMode mode,
-  bool has_grasp_pose = false,
   bool plan_only = false
   );
 
@@ -138,34 +140,51 @@ public:
   bool plan_only = false
   );
 
-  void changePlanningGroup(const std::string& planning_group);
+  void changePlanningGroup
+  (
+  const std::string& planning_group
+  );
 
   /**
    * @brief get the defined needle GraspInfo
    * @return
    */
-  const GraspInfo& getDefinedGraspInfo() const;
+  const GraspInfo& getDefinedGraspInfo
+  (
+  ) const;
 
   /**
    * @brief get the selected needle GraspInfo
    * @return
    */
-  const GraspInfo& getSelectedGraspInfo() const;
+  const GraspInfo& getSelectedGraspInfo
+  (
+  ) const;
 
   /**
    * @brief return needle pose
    * @return
    */
-  geometry_msgs::PoseStamped getNeedlePose();
+  geometry_msgs::PoseStamped getNeedlePose
+  (
+  );
 
-  geometry_msgs::Transform getGraspTransform();
+  geometry_msgs::Transform getGraspTransform
+  (
+  );
 
-  inline const std::vector<double>& graspedJointPosition() const
+  inline const std::vector<double>& graspedJointPosition
+  (
+  ) const
   {
     return graspedJointPosition_;
   }
 
-  bool compensationLinearMove(double z_dist, double time);
+  bool compensationLinearMove
+  (
+  double z_dist,
+  double time
+  );
 
 private:
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
@@ -209,9 +228,9 @@ private:
 
   bool fresh_needle_pose_ = false;
 
-  GraspInfo selected_grasp_;
+  GraspInfo selected_grasp_info_;
 
-  GraspInfo defined_grasp_;
+  GraspInfo defined_grasp_info_;
 
   std::vector<double> graspedJointPosition_;
 
@@ -247,9 +266,7 @@ private:
   const std::string& needle_name,
   const geometry_msgs::PoseStamped& needle_pose,
   moveit_msgs::Grasp& defined_grasp_msgs,
-  GraspInfo& grasp_pose,
-  bool plan_only,
-  bool has_grasp_pose = false
+  bool plan_only
   );
 
   bool optimalPickNeedle
@@ -286,13 +303,18 @@ private:
    * @param needle_name
    * @return
    */
-  bool removeNeedleFromPlanningScene(const std::string &needle_name);
+  bool removeNeedleFromPlanningScene
+  (
+  const std::string &needle_name
+  );
 
   /**
    * @brief to get needle collision model
    * @return
    */
-  bool getNeedleCollisionModel();
+  bool getNeedleCollisionModel
+  (
+  );
 
   /**
    * @brief generate needle collision model based on its origin
@@ -300,25 +322,37 @@ private:
    * @param needle_name
    * @return true if needle able to be generated
    */
-  bool generateNeedleCollisionModel(const geometry_msgs::PoseStamped &needle_origin,
-                                    const std::string &needle_name);
+  bool generateNeedleCollisionModel
+  (
+  const geometry_msgs::PoseStamped &needle_origin,
+  const std::string &needle_name
+  );
 
   /**
    * @brief receive latest needle origin pose
    * @param needle_pose
    */
-  void needlePoseCallBack(const geometry_msgs::PoseStamped& needle_pose);
+  void needlePoseCallBack
+  (
+  const geometry_msgs::PoseStamped& needle_pose
+  );
 
   /**
    * @brief update needle pose received from callback function
    */
-  void updateNeedlePose();
+  void updateNeedlePose
+  (
+  );
 
   /**
    * @brief Update needle's collision model in the planning scene
    * @return
    */
-  bool updateNeedleModel(const std::string &needle_name, bool in_planning_scene);
+  bool updateNeedleModel
+  (
+  const std::string &needle_name,
+  bool in_planning_scene
+  );
 
   /**
    * @brief Check if object is being attached by planning group
@@ -326,8 +360,11 @@ private:
    * @param attachedObjsCheckMap
    * @return
    */
-  bool hasObject(const std::string &name,
-                 const AttachedObjsCheckMap &attachedObjsCheckMap);
+  bool hasObject
+  (
+  const std::string &name,
+  const AttachedObjsCheckMap &attachedObjsCheckMap
+  );
 
   /**
    * @brief Check if object is in the current planning scene
@@ -335,16 +372,23 @@ private:
    * @param objsCheckMap
    * @return
    */
-  bool hasObject(const std::string &name,
-                 const ObjsCheckMap &objsCheckMap);
+  bool hasObject
+  (
+  const std::string &name,
+  const ObjsCheckMap &objsCheckMap
+  );
 
   bool turnOnStickyFinger
   (
   );
 
-  bool executePickupTraj();
+  bool executePickupTraj
+  (
+  );
 
-  bool executePlaceTraj();
+  bool executePlaceTraj
+  (
+  );
 
   void constructPickupGoal
   (

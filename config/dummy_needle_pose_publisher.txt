@@ -1,3 +1,15 @@
 rostopic pub -r 100 /updated_needle_pose geometry_msgs/PoseStamped  '{header: {frame_id: "/davinci_endo_cam_l"}, pose: {position: {x: 0.1, y: -0.02, z: 0.05}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}'
 
 rostopic pub -r 100 /updated_needle_pose geometry_msgs/PoseStamped  '{header: {frame_id: "/davinci_endo_cam_l"}, pose: {position: {x: -0.01, y: 0.02, z: 0.14}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}'
+
+rostopic pub -r 100 /updated_needle_pose geometry_msgs/PoseStamped  '{header: {frame_id: "/davinci_endo_cam_l"}, pose: {position: {x: 0.0, y: 0.0, z: 0.18}, orientation: {x: 0.0, y: 0.0, z: 1.0, w: 0.0}}}'
+
+rosservice call /gazebo/set_model_state "{model_state: {model_name: 'needle_r', pose: {position: {x: 0.0, y: 0.00, z: 0.18}, orientation: {x: 0.11840994154704, y: 0.07380327846704783, z: 0.9876884175338724, w: 0.0707372016677029}}, twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}, reference_frame: 'davinci_endo_cam_l'}}"
+
+model_name: {"needle_r"}
+
+pose: {position: {x: 0.0, y: 0.00, z: 0.18}, orientation: {x: 0.11840994154704, y: 0.07380327846704783, z: 0.9876884175338724, w: 0.0707372016677029}}
+
+twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}
+
+reference_frame: {"/davinci_endo_cam_l"}

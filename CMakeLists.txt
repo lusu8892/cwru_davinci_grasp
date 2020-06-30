@@ -165,6 +165,7 @@ add_executable(davinci_needle_pose_publisher test/davinci_needle_pose_publisher.
 add_executable(davinci_test_grasping_main src/davinci_test_grasping_main.cpp)
 add_executable(davinci_needle_grasper_action_server_main src/davinci_needle_grasper_action_server_main.cpp)
 add_executable(davinci_grasp_info_writer src/davinci_grasp_info_writer.cpp)
+add_executable(davinci_needle_pose_perturber test/davinci_needle_pose_perturber.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -187,6 +188,7 @@ target_link_libraries(davinci_needle_pose_publisher ${catkin_LIBRARIES} ${GAZEBO
 target_link_libraries(davinci_test_grasping_main cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_needle_grasper_action_server_main cwru_davinci_grasp ${catkin_LIBRARIES})
 target_link_libraries(davinci_grasp_info_writer cwru_davinci_grasp ${catkin_LIBRARIES})
+target_link_libraries(davinci_needle_pose_perturber ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 #############
 ## Install ##

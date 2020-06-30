@@ -51,16 +51,25 @@ namespace cwru_davinci_grasp
 class DavinciNeedleGrasperBase
 {
 public:
-  DavinciNeedleGrasperBase(const ros::NodeHandle &nh_priv,
-                           const std::string &planning_group_name,
-                           const std::string &ee_group_name);
+  DavinciNeedleGrasperBase
+  (
+  const ros::NodeHandle &nh_priv,
+  const std::string &planning_group_name,
+  const std::string &ee_group_name
+  );
 
-  DavinciNeedleGrasperBase(const ros::NodeHandle &nh_priv,
-                           const std::string &planning_group_name);
+  DavinciNeedleGrasperBase
+  (
+  const ros::NodeHandle &nh_priv,
+  const std::string &planning_group_name
+  );
 
   ~DavinciNeedleGrasperBase(){};
 
-  std::vector<GraspInfo> getAllPossibleNeedleGrasps(bool sort = false);
+  const std::vector<GraspInfo>& getAllPossibleNeedleGrasps
+  (
+  bool sort = false
+  );
 protected:
   ros::NodeHandle nh_priv_;
 
