@@ -44,10 +44,12 @@
 
 #include <cwru_davinci_grasp/davinci_simple_grasp_generator.h>
 
-class DummyNeedleTracker
+class DummyNeedleModifier
 {
 public :
-  DummyNeedleTracker
+  DummyNeedleModifier(){}
+
+  DummyNeedleModifier
   (
   const ros::NodeHandle &nh
   );
@@ -55,29 +57,25 @@ public :
   bool perturbNeedlePose
   (
   double perturbRadian,
-  const cwru_davinci_grasp::GraspInfo& selectedGrasp
+  const cwru_davinci_grasp::GraspInfo& selectedGrasp,
+  const Eigen::Affine3d& idealNeedlePose = Eigen::Affine3d(),
+  bool useIdealNdlPose = false
   );
 
-  bool publishNeedlePose();
+protected:
+  virtual void initialize();
 
-private:
-  void initialize();
-
-  bool getNeedlePose();
-
-private:
+protected:
   ros::NodeHandle               m_NodeHandle;
   ros::ServiceClient            m_NeedlePoseClient;
   ros::ServiceClient            m_NeedlePoseModifier;
-  ros::Publisher                m_NeedlePosePub;
 
-  geometry_msgs::PoseStamped    m_StampedNeedlePose;
   geometry_msgs::Pose           m_PerturbedNeedlePose;
   gazebo_msgs::GetModelState    m_NeedleState;
   gazebo_msgs::SetModelState    m_PerturbedNeedleState;
 };
 
-DummyNeedleTracker::DummyNeedleTracker
+DummyNeedleModifier::DummyNeedleModifier
 (
 const ros::NodeHandle &nh
 ) 
@@ -86,13 +84,12 @@ const ros::NodeHandle &nh
   initialize();
 }
 
-void DummyNeedleTracker::initialize
+void DummyNeedleModifier::initialize
 (
 )
 {
   m_NeedlePoseClient = m_NodeHandle.serviceClient<gazebo_msgs::GetModelState>("/gazebo/get_model_state");
   m_NeedlePoseModifier = m_NodeHandle.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
-  m_NeedlePosePub = m_NodeHandle.advertise<geometry_msgs::PoseStamped>("/updated_needle_pose", 1000);
 
   m_NeedleState.request.model_name = "needle_r";
   m_NeedleState.request.relative_entity_name = "davinci_endo_cam_l";
@@ -101,21 +98,28 @@ void DummyNeedleTracker::initialize
   m_PerturbedNeedleState.request.model_state.reference_frame = "davinci_endo_cam_l";
 }
 
-bool DummyNeedleTracker::perturbNeedlePose
+bool DummyNeedleModifier::perturbNeedlePose
 (
 double perturbRadian,
-const cwru_davinci_grasp::GraspInfo& selectedGrasp
+const cwru_davinci_grasp::GraspInfo& selectedGrasp,
+const Eigen::Affine3d& idealNeedlePose,
+bool useIdealNdlPose
 )
 {
-  if (!m_NeedlePoseClient.call(m_NeedleState))
-  {
-    ROS_WARN("DummyNeedleTracker: Failed getting neeedle pose from gazebo");
-    return false;
-  }
-
   Eigen::Affine3d needlePose;
-  tf::poseMsgToEigen(m_NeedleState.response.pose, needlePose);
-
+  if (useIdealNdlPose)
+  {
+    needlePose = idealNeedlePose;
+  }
+  else
+  {
+    if (!m_NeedlePoseClient.call(m_NeedleState))
+    {
+      ROS_WARN("DummyNeedleModifier: Failed getting neeedle pose from gazebo");
+      return false;
+    }
+    tf::poseMsgToEigen(m_NeedleState.response.pose, needlePose);
+  }
 
   double needle_radius = 0.0125;  // TODO
   double radius = selectedGrasp.graspParamInfo.param_3;
@@ -149,11 +153,39 @@ const cwru_davinci_grasp::GraspInfo& selectedGrasp
   tf::poseEigenToMsg(perturbedNeedlePose, m_PerturbedNeedleState.request.model_state.pose);
   if (!m_NeedlePoseModifier.call(m_PerturbedNeedleState))
   {
-    ROS_WARN("DummyNeedleTracker: Failed setting perturbed neeedle pose to gazebo");
+    ROS_WARN("DummyNeedleModifier: Failed setting perturbed neeedle pose to gazebo");
     return false;
   }
 
   return true;
+}
+
+class DummyNeedleTracker : public DummyNeedleModifier
+{
+public :
+  DummyNeedleTracker
+  (
+  const ros::NodeHandle &nh
+  );
+
+  bool publishNeedlePose();
+
+protected:
+  bool getNeedlePose();
+
+protected:
+  ros::Publisher                m_NeedlePosePub;
+
+  geometry_msgs::PoseStamped    m_StampedNeedlePose;
+};
+
+DummyNeedleTracker::DummyNeedleTracker
+(
+const ros::NodeHandle &nh
+)
+ : DummyNeedleModifier(nh)
+{
+  m_NeedlePosePub = m_NodeHandle.advertise<geometry_msgs::PoseStamped>("/updated_needle_pose", 1000);
 }
 
 bool DummyNeedleTracker::publishNeedlePose()
@@ -171,7 +203,7 @@ bool DummyNeedleTracker::getNeedlePose
 {
   if (!m_NeedlePoseClient.call(m_NeedleState))
   {
-    ROS_WARN("DummyNeedleTracker: Failed getting neeedle pose from gazebo");
+    ROS_WARN("DummyNeedleModifier: Failed getting neeedle pose from gazebo");
     return false;
   }
 

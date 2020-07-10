@@ -102,15 +102,23 @@ int main(int argc, char** argv)
   graspInfo2.graspParamInfo.param_2 = -3.1415000000000002;
   graspInfo2.graspParamInfo.param_3 = 0.16667000000000001;
   graspInfo2.theta_diff_avg = 0.054442750000000005;
-  while (ros::ok())
-  {
-    needleTracker.perturbNeedlePose(0.1, graspInfo2);
-    ros::spinOnce();
-    ros::Duration(2.0).sleep();
 
-    needleTracker.perturbNeedlePose(-0.1, graspInfo2);
-    ros::spinOnce();
-    ros::Duration(2.0).sleep();
-  }
+  // while (ros::ok())
+  // {
+  //   needleTracker.perturbNeedlePose(0.1, graspInfo2);
+  //   ros::spinOnce();
+  //   ros::Duration(2.0).sleep();
+
+  //   needleTracker.perturbNeedlePose(-0.1, graspInfo2);
+  //   ros::spinOnce();
+  //   ros::Duration(2.0).sleep();()
+  // }
+  Eigen::Affine3d idealNeedlePose(Eigen::Quaterniond(0.0, 0.0, 0.0, 1.0));
+  idealNeedlePose.translation().x() = 0.0;
+  idealNeedlePose.translation().y() = 0.0;
+  idealNeedlePose.translation().z() = 0.18;
+  needleTracker.perturbNeedlePose(-0.1, graspInfo2, idealNeedlePose, true);
+  ros::spinOnce();
+  ros::Duration(2.0).sleep();
   return 0;
 }

@@ -415,7 +415,7 @@ GraspInfo &grasp_info
 
   Eigen::Matrix3d orientaion; // orientation part
   orientaion <<
-             cos(theta_1) * sin(theta_3) - cos(theta_3) * sin(theta_1) * sin(theta_2),
+     cos(theta_1) * sin(theta_3) - cos(theta_3) * sin(theta_1) * sin(theta_2),
     -cos(theta_1) * cos(theta_3) - sin(theta_1) * sin(theta_2) * sin(theta_3),
     cos(theta_2) * sin(theta_1), -cos(theta_2) * cos(theta_3),
     -cos(theta_2) * sin(theta_3), -sin(theta_2),

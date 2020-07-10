@@ -44,7 +44,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "davinci_needle_pose_publisher");
 
   ros::NodeHandle nh;
-  ros::Rate loopRate(10);
+  ros::Rate loopRate(2);
   DummyNeedleTracker needleTracker(nh);
   while (ros::ok())
   {

@@ -2,6 +2,8 @@ base_link: 'davinci_endo_cam_l'  #this can be changed to any global reference fr
 
 needle_radius : 0.0125
 
+needle_mesh_mode_path: 'package://sim_gazebo/props/needle/mesh/needle_thin.dae'
+
 # =====================================================
 psm_one_gripper:
     end_effector_name: 'psm_one_gripper'  #ee group name

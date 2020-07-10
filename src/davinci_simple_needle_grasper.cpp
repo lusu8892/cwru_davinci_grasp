@@ -731,8 +731,7 @@ const std::string& needle_name
 
   Eigen::Vector3d scale_vec(1.0, 1.0, 1.0);
   shapes::Mesh* m =
-      shapes::createMeshFromResource("package://sim_gazebo/"
-                                     "props/needle_pf/mesh/needle_pf.dae",
+      shapes::createMeshFromResource(needleGraspData_.needle_mesh_model_path_,
                                      scale_vec);
   ROS_INFO("needle mesh loaded");
   shape_msgs::Mesh mesh;
