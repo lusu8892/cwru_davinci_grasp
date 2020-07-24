@@ -59,7 +59,9 @@ public :
   double perturbRadian,
   const cwru_davinci_grasp::GraspInfo& selectedGrasp,
   const Eigen::Affine3d& idealNeedlePose = Eigen::Affine3d(),
-  bool useIdealNdlPose = false
+  bool useIdealNdlPose = false,
+  char rotAxis = 'z',
+  bool randomRotAxis = true
   );
 
   bool getPerturbedNeedlePose
@@ -126,7 +128,9 @@ bool DummyNeedleModifier::perturbNeedlePose
 double perturbRadian,
 const cwru_davinci_grasp::GraspInfo& selectedGrasp,
 const Eigen::Affine3d& idealNeedlePose,
-bool useIdealNdlPose
+bool useIdealNdlPose,
+char rotAxis,
+bool randomRotAxis
 )
 {
   Eigen::Affine3d needlePose;
@@ -160,10 +164,37 @@ bool useIdealNdlPose
 
   Eigen::Vector3d perturbAxisOfRotWrtWorldFrame = needleFrameZaxisProjectedOnWorldFrame;
 
-  if (m_Distribution(m_Generator))
+  if (!randomRotAxis)
   {
-    perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
-    perturbRadian -= 0.08;  // compensation, this is a number from statistics
+    switch (rotAxis)
+    {
+      case 'z' :
+        break;
+      case 'r' :
+        perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
+        perturbRadian -= 0.03;  // compensation, this is a number from statistics
+        break;
+      case 't' :
+        perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
+        perturbRadian -= 0.08;  // compensation, this is a number from statistics
+        break;
+    }
+  }
+  else
+  {
+    if (m_Distribution(m_Generator))
+    {
+      if(m_Distribution(m_Generator))
+      {
+        perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
+        perturbRadian -= 0.03;  // compensation, this is a number from statistics
+      }
+      else
+      {
+        perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
+        perturbRadian -= 0.08;  // compensation, this is a number from statistics
+      }
+    }
   }
 
   Eigen::AngleAxisd perturbRotationMatWrtWorldFrame(perturbRadian, perturbAxisOfRotWrtWorldFrame);

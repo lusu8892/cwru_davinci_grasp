@@ -41,6 +41,16 @@
 #include <cwru_davinci/uv_control/psm_interface.h>
 #include <std_srvs/SetBool.h>
 
+class UniformRandGenerator
+{
+public:
+  UniformRandGenerator(double min, double max) : m_UniformRealDistribution(min, max){};
+
+  double rand() {return m_UniformRealDistribution(m_Generator);}
+private:
+  std::default_random_engine m_Generator;
+  std::uniform_real_distribution<double> m_UniformRealDistribution;
+};
 
 void showStats
 (
@@ -128,11 +138,14 @@ int main(int argc, char** argv)
   vec.resize(num);
   vecDiff.reserve(num);
 
-  double perturbRadian = -0.1;
+  UniformRandGenerator uRand(-0.2, 0.2);
+  // double perturbRadian = 0.2;
+  double perturbRadian = uRand.rand();
   bool perturb = perturbRadian > 0.0 ? true : false;
 
   for (std::size_t i = 0; i < num; ++i)
   {
+    perturbRadian = uRand.rand();
     vec[i].reserve(2);
     // open jaw;
     pSupportArmGroup->control_jaw(0.3, 1.0);
@@ -142,7 +155,7 @@ int main(int argc, char** argv)
     stickyFingerClient.call(graspCommand);
 
     // perturbe needle pose
-    needleTracker.perturbNeedlePose(perturbRadian, graspInfo2, idealNeedlePose, true);
+    needleTracker.perturbNeedlePose(perturbRadian, graspInfo2, idealNeedlePose, true, 'r', false);
 
     ros::Duration(0.5).sleep();
     // calculate the net of radian of perturbed needle pose
