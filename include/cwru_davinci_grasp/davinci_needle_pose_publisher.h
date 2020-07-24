@@ -62,6 +62,11 @@ public :
   bool useIdealNdlPose = false
   );
 
+  bool getPerturbedNeedlePose
+  (
+  Eigen::Affine3d& perturbedNeedlePose
+  );
+
 protected:
   virtual void initialize();
 
@@ -73,6 +78,9 @@ protected:
   geometry_msgs::Pose           m_PerturbedNeedlePose;
   gazebo_msgs::GetModelState    m_NeedleState;
   gazebo_msgs::SetModelState    m_PerturbedNeedleState;
+
+  std::bernoulli_distribution   m_Distribution;
+  std::default_random_engine    m_Generator;
 };
 
 DummyNeedleModifier::DummyNeedleModifier
@@ -96,6 +104,21 @@ void DummyNeedleModifier::initialize
 
   m_PerturbedNeedleState.request.model_state.model_name = "needle_r";
   m_PerturbedNeedleState.request.model_state.reference_frame = "davinci_endo_cam_l";
+}
+
+bool DummyNeedleModifier::getPerturbedNeedlePose
+(
+Eigen::Affine3d& perturbedNeedlePose
+)
+{
+  if (!m_NeedlePoseClient.call(m_NeedleState))
+  {
+    ROS_WARN("DummyNeedleModifier: Failed getting neeedle pose from gazebo");
+    return false;
+  }
+  tf::poseMsgToEigen(m_NeedleState.response.pose, perturbedNeedlePose);
+
+  return true;
 }
 
 bool DummyNeedleModifier::perturbNeedlePose
@@ -135,7 +158,13 @@ bool useIdealNdlPose
 
   Eigen::Vector3d needleFrameZaxisProjectedOnWorldFrame = needlePose.rotation().col(2);
 
-  Eigen::Vector3d perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
+  Eigen::Vector3d perturbAxisOfRotWrtWorldFrame = needleFrameZaxisProjectedOnWorldFrame;
+
+  if (m_Distribution(m_Generator))
+  {
+    perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
+    perturbRadian -= 0.08;  // compensation, this is a number from statistics
+  }
 
   Eigen::AngleAxisd perturbRotationMatWrtWorldFrame(perturbRadian, perturbAxisOfRotWrtWorldFrame);
 
