@@ -64,7 +64,7 @@ public :
   bool randomRotAxis = true
   );
 
-  bool getPerturbedNeedlePose
+  bool getCurrentNeedlePose
   (
   Eigen::Affine3d& perturbedNeedlePose
   );
@@ -108,9 +108,9 @@ void DummyNeedleModifier::initialize
   m_PerturbedNeedleState.request.model_state.reference_frame = "davinci_endo_cam_l";
 }
 
-bool DummyNeedleModifier::getPerturbedNeedlePose
+bool DummyNeedleModifier::getCurrentNeedlePose
 (
-Eigen::Affine3d& perturbedNeedlePose
+Eigen::Affine3d& currentNeedlePose
 )
 {
   if (!m_NeedlePoseClient.call(m_NeedleState))
@@ -118,7 +118,7 @@ Eigen::Affine3d& perturbedNeedlePose
     ROS_WARN("DummyNeedleModifier: Failed getting neeedle pose from gazebo");
     return false;
   }
-  tf::poseMsgToEigen(m_NeedleState.response.pose, perturbedNeedlePose);
+  tf::poseMsgToEigen(m_NeedleState.response.pose, currentNeedlePose);
 
   return true;
 }
@@ -170,13 +170,13 @@ bool randomRotAxis
     {
       case 'z' :
         break;
-      case 'r' :
-        perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
-        perturbRadian -= 0.03;  // compensation, this is a number from statistics
-        break;
       case 't' :
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
         perturbRadian -= 0.08;  // compensation, this is a number from statistics
+        break;
+      case 'r' :
+        perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
+        perturbRadian -= 0.03;  // compensation, this is a number from statistics
         break;
     }
   }
@@ -187,12 +187,12 @@ bool randomRotAxis
       if(m_Distribution(m_Generator))
       {
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
-        perturbRadian -= 0.03;  // compensation, this is a number from statistics
+        perturbRadian -= 0.08;  // compensation, this is a number from statistics
       }
       else
       {
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
-        perturbRadian -= 0.08;  // compensation, this is a number from statistics
+        perturbRadian -= 0.03;  // compensation, this is a number from statistics
       }
     }
   }

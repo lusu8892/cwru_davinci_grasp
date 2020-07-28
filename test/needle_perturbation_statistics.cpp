@@ -160,7 +160,7 @@ int main(int argc, char** argv)
     ros::Duration(0.5).sleep();
     // calculate the net of radian of perturbed needle pose
     Eigen::Affine3d perturbedNeedlePose;
-    if(!needleTracker.getPerturbedNeedlePose(perturbedNeedlePose))
+    if(!needleTracker.getCurrentNeedlePose(perturbedNeedlePose))
       return false;
     double radOfChange1;
     radianOfChange(radOfChange1,
@@ -177,7 +177,7 @@ int main(int argc, char** argv)
 
     // calculate the net of radian change after jaw close
     Eigen::Affine3d needlePoseAfterCloseJaw;
-    if(!needleTracker.getPerturbedNeedlePose(needlePoseAfterCloseJaw))
+    if(!needleTracker.getCurrentNeedlePose(needlePoseAfterCloseJaw))
       return false;
     double radOfChange2;
     radianOfChange(radOfChange2,
