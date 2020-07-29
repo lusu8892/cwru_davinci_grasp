@@ -83,6 +83,7 @@ protected:
 
   std::bernoulli_distribution   m_Distribution;
   std::default_random_engine    m_Generator;
+  std::random_device            m_RandSeed;
 };
 
 DummyNeedleModifier::DummyNeedleModifier
@@ -182,9 +183,9 @@ bool randomRotAxis
   }
   else
   {
-    if (m_Distribution(m_Generator))
+    if (m_Distribution(m_RandSeed))
     {
-      if(m_Distribution(m_Generator))
+      if(m_Distribution(m_RandSeed))
       {
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
         perturbRadian -= 0.08;  // compensation, this is a number from statistics
