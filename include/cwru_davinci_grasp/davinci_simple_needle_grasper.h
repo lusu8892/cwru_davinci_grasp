@@ -173,7 +173,7 @@ public:
   (
   );
 
-  inline const std::vector<double>& graspedJointPosition
+  const std::vector<double>& graspedJointPosition
   (
   ) const
   {
