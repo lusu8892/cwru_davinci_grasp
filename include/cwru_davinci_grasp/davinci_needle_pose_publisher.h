@@ -69,6 +69,17 @@ public :
   Eigen::Affine3d& perturbedNeedlePose
   );
 
+  bool setNeedlePose
+  (
+  double x,
+  double y,
+  double z,
+  double qw,
+  double qx,
+  double qy,
+  double qz
+  );
+
 protected:
   virtual void initialize();
 
@@ -215,6 +226,34 @@ bool randomRotAxis
   if (!m_NeedlePoseModifier.call(m_PerturbedNeedleState))
   {
     ROS_WARN("DummyNeedleModifier: Failed setting perturbed neeedle pose to gazebo");
+    return false;
+  }
+
+  return true;
+}
+
+bool DummyNeedleModifier::setNeedlePose
+(
+double x,
+double y,
+double z,
+double qw,
+double qx,
+double qy,
+double qz
+)
+{
+  m_PerturbedNeedleState.request.model_state.pose.position.x = x;
+  m_PerturbedNeedleState.request.model_state.pose.position.y = y;
+  m_PerturbedNeedleState.request.model_state.pose.position.z = z;
+
+  m_PerturbedNeedleState.request.model_state.pose.orientation.w = qw;
+  m_PerturbedNeedleState.request.model_state.pose.orientation.x = qx;
+  m_PerturbedNeedleState.request.model_state.pose.orientation.y = qy;
+  m_PerturbedNeedleState.request.model_state.pose.orientation.z = qz;
+  if (!m_NeedlePoseModifier.call(m_PerturbedNeedleState))
+  {
+    ROS_WARN("DummyNeedleModifier: Failed to set needle pose");
     return false;
   }
 
