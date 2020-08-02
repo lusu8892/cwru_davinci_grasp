@@ -486,6 +486,52 @@ bool plan_only
   return randomPickNeedle(needle_name, needle_pose, possible_grasps_msgs, plan_only, false, NeedlePickMode::FINDGOOD);
 }
 
+bool DavinciSimpleNeedleGrasper::selectPickNeedle
+(
+const std::string& needle_name,
+GraspInfo& selected_grasp_info,
+bool plan_only
+)
+{
+  bool able_to_pick = false;
+
+  if (hasObject(needle_name, planning_scene_interface_ -> getAttachedObjects()))
+  {
+    if(!move_group_->detachObject(needle_name))
+    {
+      ROS_INFO("Needle: %s is already grasped and can not be detached from group %s", needle_name.c_str(),
+               move_group_->getName().c_str());
+      return able_to_pick;
+    }
+  }
+
+  objsCheckMap_ = planning_scene_interface_ -> getObjects();
+
+  if (!updateNeedleModel(needle_name, hasObject(needle_name, objsCheckMap_)))
+  {
+    return able_to_pick;
+  }
+  // Pick grasp
+  moveit_msgs::Grasp grasp_msg;
+  simpleNeedleGraspGenerator_->generateDefinedSimpleNeedleGrasp(needle_pose_, needleGraspData_, grasp_msg,
+                                                                selected_grasp_info, true);
+  needleGraspData_.print();
+  std::vector<moveit_msgs::Grasp> defined_grasp(1, grasp_msg);
+  able_to_pick = planGraspPath(needle_name, defined_grasp, NeedlePickMode::SELECT);
+
+  if (able_to_pick && !plan_only)
+  {
+    selected_grasp_info_ = selected_grasp_info;
+    able_to_pick = executePickupTraj();
+    m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
+    ROS_INFO("Object has been picked up");
+    return able_to_pick;
+  }
+
+  ROS_INFO("Can not pick needle in SELECT mode");
+  return able_to_pick;
+}
+
 bool DavinciSimpleNeedleGrasper::planGraspPath
 (
 const std::string& needle_name,
@@ -505,9 +551,11 @@ const NeedlePickMode pickMode
   switch (pickMode)
   {
     case NeedlePickMode::OPTIMAL :
-      // continue to DEFIND
+      // continue to DEFINED
     case NeedlePickMode::FINDGOOD :
-      // continue to DEFIND
+      // continue to DEFINED
+    case NeedlePickMode::SELECT :
+      // conttnue to DEFINED
     case NeedlePickMode::DEFINED :
       for (std::size_t i = 0; i < possible_grasps_msgs.size(); ++i)
       {
@@ -531,9 +579,17 @@ const NeedlePickMode pickMode
         pPickPlace_->visualizePlan(pGoodPlan);
         std::vector<plan_execution::ExecutableTrajectory> graspPath = pGoodPlan->trajectories_;
         convertPathToTrajectory(graspPath, graspTrajectories_);
-        // selected_grasp_info_.graspParamInfo.grasp_id = i;
-        if (possible_grasps_msgs.size() == 1)
+        if (possible_grasps_msgs.size() == 1 && pickMode == NeedlePickMode::DEFINED)
+        {
           selected_grasp_info_ = defined_grasp_info_;
+        }
+        else if (possible_grasps_msgs.size() == 1 && pickMode == NeedlePickMode::SELECT)
+        {
+          ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)i);
+          ROS_INFO("Prepared to call debugger");
+          ros::Duration(1.0).sleep();
+          return true;
+        }
         selected_grasp_info_ = possible_grasps_[i];
 
         ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)i);
@@ -588,7 +644,7 @@ std::vector<trajectory_msgs::JointTrajectory>& executableTrajectory
     planedPath[i].trajectory_->getRobotTrajectoryMsg(ithTraj);
     executableTrajectory.push_back(ithTraj.joint_trajectory);
     double t = 0;
-    double time = 0.2;
+    double time = 0.05;
     for (std::size_t j = 0; j < executableTrajectory[i].points.size(); ++j)
     {
       t += time;
@@ -908,7 +964,10 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
 
   uv_msgs::pf_grasp pf_grasp_srv;
   pf_grasp_srv.request.psm = m_pSupportArmGroup->get_psm();
-  geometry_msgs::Pose grasp_pose = possible_grasps_msgs_[selected_grasp_info_.graspParamInfo.grasp_id].grasp_pose.pose;
+  // geometry_msgs::Pose grasp_pose = possible_grasps_msgs_[selected_grasp_info_.graspParamInfo.grasp_id].grasp_pose.pose;
+
+  geometry_msgs::Pose grasp_pose;
+  tf::poseEigenToMsg(selected_grasp_info_.grasp_pose, grasp_pose);
   pf_grasp_srv.request.grasp_transform.rotation.w = grasp_pose.orientation.w;
   pf_grasp_srv.request.grasp_transform.rotation.x = grasp_pose.orientation.x;
   pf_grasp_srv.request.grasp_transform.rotation.y = grasp_pose.orientation.y;

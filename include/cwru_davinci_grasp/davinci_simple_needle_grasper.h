@@ -67,7 +67,7 @@ namespace cwru_davinci_grasp
 {
 
 //  scoped enum definition for user to choose needle pick mode
-enum class NeedlePickMode { RANDOM, DEFINED, OPTIMAL, FINDGOOD };
+enum class NeedlePickMode { RANDOM, DEFINED, OPTIMAL, FINDGOOD, SELECT };
 
 class DavinciSimpleNeedleGrasper : public DavinciNeedleGrasperBase
 {
@@ -184,6 +184,13 @@ public:
   (
   double z_dist,
   double time
+  );
+
+  bool selectPickNeedle
+  (
+  const std::string& needle_name,
+  GraspInfo& selected_grasp_info,
+  bool plan_only = false
   );
 
 private:
