@@ -192,12 +192,12 @@ bool randomRotAxis
       case 't' :
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
         ROS_INFO("DummyNeedleModifier: Perturbation is around Tangential Axis");
-        perturbRadian -= 0.08;  // compensation, this is a number from statistics
+        // perturbRadian -= 0.08;  // compensation, this is a number from statistics
         break;
       case 'r' :
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
         ROS_INFO("DummyNeedleModifier: Perturbation is around Radial Axis");
-        perturbRadian -= 0.03;  // compensation, this is a number from statistics
+        // perturbRadian -= 0.03;  // compensation, this is a number from statistics
         break;
     }
   }
@@ -207,20 +207,24 @@ bool randomRotAxis
     {
       if(m_Distribution(m_RandSeed))
       {
+        rotAxis = 't';
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
         ROS_INFO("DummyNeedleModifier: Perturbation is around Tangential Axis");
-        perturbRadian -= 0.08;  // compensation, this is a number from statistics
+        // perturbRadian -= 0.08;  // compensation, this is a number from statistics
       }
       else
       {
+        rotAxis = 'r';
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
         ROS_INFO("DummyNeedleModifier: Perturbation is around Radial Axis");
-        perturbRadian -= 0.03;  // compensation, this is a number from statistics
+        // perturbRadian -= 0.03;  // compensation, this is a number from statistics
       }
     }
   }
 
-  ROS_INFO("DummyNeedleModifier: Perturbation is around Vertical Axis");
+  if (rotAxis == 'z')
+    ROS_INFO("DummyNeedleModifier: Perturbation is around Vertical Axis");
+
   Eigen::AngleAxisd perturbRotationMatWrtWorldFrame(perturbRadian, perturbAxisOfRotWrtWorldFrame);
 
   Eigen::Vector3d needleLocationWrtWorldFrame = needlePose.translation();
@@ -294,6 +298,7 @@ public :
 
   bool publishNeedlePose();
 
+  bool publishNeedlePoseWithNose();
 protected:
   bool getNeedlePose();
 
@@ -318,6 +323,24 @@ bool DummyNeedleTracker::publishNeedlePose()
     return false;
 
   m_NeedlePosePub.publish(m_StampedNeedlePose);
+  return true;
+}
+
+bool DummyNeedleTracker::publishNeedlePoseWithNose()
+{
+  if (!getNeedlePose())
+    return false;
+
+  // G_wn
+  // G_wn * (Rot_o/n, T == 0)
+  // (I, T.z + std::normal_distribution(0.002, 0.0001)) * G_wn
+  // (I, T.z + 0.002) * G_wn *(Rot_o/n, T == 0)
+
+  // adding depth error camera's z axis
+  // adding rotational error needle's z axis
+
+  // m_StampedNeedlePose.pose.position.z += 
+  // m_NeedlePosePub.publish(m_StampedNeedlePose);
   return true;
 }
 

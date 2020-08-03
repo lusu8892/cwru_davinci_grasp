@@ -40,6 +40,7 @@
 #include <cwru_davinci_grasp/davinci_needle_pose_publisher.h>
 #include <cwru_davinci/uv_control/psm_interface.h>
 #include <std_srvs/SetBool.h>
+#include <memory>
 
 class UniformRandGenerator
 {
@@ -75,7 +76,6 @@ const std::vector<double>& diffVec
 void radianOfChange
 (
 double& radOfChange,
-bool perturb,
 const Eigen::Quaterniond& q1,
 const Eigen::Quaterniond& q2
 )
@@ -83,8 +83,6 @@ const Eigen::Quaterniond& q2
   // q_w_ri, q_w_rp, q_ri_rp = q_ri_w * q_w_rp = transpose(q_w_ri) * q_w_rp;
   const Eigen::Quaterniond q = q1.inverse() * q2;
   radOfChange = 2 * acos(q.w());
-  if (!perturb)
-    radOfChange *= -1;
 }
 
 int main(int argc, char** argv)
@@ -138,24 +136,26 @@ int main(int argc, char** argv)
   vec.resize(num);
   vecDiff.reserve(num);
 
-  UniformRandGenerator uRand(-0.2, 0.2);
-  // double perturbRadian = 0.2;
-  double perturbRadian = uRand.rand();
-  bool perturb = perturbRadian > 0.0 ? true : false;
+  std::array<double,4>                                   m_Intervals{{-0.31, -0.29, 0.29, 0.31}};
+  std::array<double,3>                                   m_Weights{{50.0, 1.0, 50.0}};
+  std::piecewise_constant_distribution<double>           m_PiecewiseDistribution(m_Intervals.begin(), m_Intervals.end(), m_Weights.begin());
+  std::random_device                                     m_RandSeed;
+
+  double perturbRadian = m_PiecewiseDistribution(m_RandSeed);
 
   for (std::size_t i = 0; i < num; ++i)
   {
-    perturbRadian = uRand.rand();
+    perturbRadian = m_PiecewiseDistribution(m_RandSeed);
     vec[i].reserve(2);
     // open jaw;
-    pSupportArmGroup->control_jaw(0.3, 1.0);
+    pSupportArmGroup->control_jaw(0.3, 0.5);
     // turn off stick finger
     std_srvs::SetBool graspCommand;
     graspCommand.request.data = false;
     stickyFingerClient.call(graspCommand);
 
     // perturbe needle pose
-    needleTracker.perturbNeedlePose(perturbRadian, graspInfo2, idealNeedlePose, true, 'r', false);
+    needleTracker.perturbNeedlePose(perturbRadian, graspInfo2, idealNeedlePose, true);
 
     ros::Duration(0.5).sleep();
     // calculate the net of radian of perturbed needle pose
@@ -164,7 +164,6 @@ int main(int argc, char** argv)
       return false;
     double radOfChange1;
     radianOfChange(radOfChange1,
-                   true,
                    Eigen::Quaterniond(idealNeedlePose.linear()),
                    Eigen::Quaterniond(perturbedNeedlePose.linear()));
 
@@ -172,7 +171,7 @@ int main(int argc, char** argv)
     graspCommand.request.data = true;
     stickyFingerClient.call(graspCommand);
     // close jaw
-    pSupportArmGroup->control_jaw(0.0, 0.5);
+    pSupportArmGroup->control_jaw(0.0, 0.05);
     ros::Duration(0.5).sleep();
 
     // calculate the net of radian change after jaw close
@@ -181,7 +180,6 @@ int main(int argc, char** argv)
       return false;
     double radOfChange2;
     radianOfChange(radOfChange2,
-                   true,
                    Eigen::Quaterniond(idealNeedlePose.linear()),
                    Eigen::Quaterniond(needlePoseAfterCloseJaw.linear()));
     double diff = fabs(radOfChange2 - radOfChange1);
