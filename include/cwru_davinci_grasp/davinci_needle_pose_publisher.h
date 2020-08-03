@@ -80,6 +80,13 @@ public :
   double qz
   );
 
+  void radianOfChange
+  (
+  double& radOfChange,
+  const Eigen::Affine3d& t1,
+  const Eigen::Affine3d& t2
+  );
+
 protected:
   virtual void initialize();
 
@@ -184,10 +191,12 @@ bool randomRotAxis
         break;
       case 't' :
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
+        ROS_INFO("DummyNeedleModifier: Perturbation is around Tangential Axis");
         perturbRadian -= 0.08;  // compensation, this is a number from statistics
         break;
       case 'r' :
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
+        ROS_INFO("DummyNeedleModifier: Perturbation is around Radial Axis");
         perturbRadian -= 0.03;  // compensation, this is a number from statistics
         break;
     }
@@ -199,16 +208,19 @@ bool randomRotAxis
       if(m_Distribution(m_RandSeed))
       {
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
+        ROS_INFO("DummyNeedleModifier: Perturbation is around Tangential Axis");
         perturbRadian -= 0.08;  // compensation, this is a number from statistics
       }
       else
       {
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame;
+        ROS_INFO("DummyNeedleModifier: Perturbation is around Radial Axis");
         perturbRadian -= 0.03;  // compensation, this is a number from statistics
       }
     }
   }
 
+  ROS_INFO("DummyNeedleModifier: Perturbation is around Vertical Axis");
   Eigen::AngleAxisd perturbRotationMatWrtWorldFrame(perturbRadian, perturbAxisOfRotWrtWorldFrame);
 
   Eigen::Vector3d needleLocationWrtWorldFrame = needlePose.translation();
@@ -258,6 +270,18 @@ double qz
   }
 
   return true;
+}
+
+void DummyNeedleModifier::radianOfChange
+(
+double& radOfChange,
+const Eigen::Affine3d& t1,
+const Eigen::Affine3d& t2
+)
+{
+  // q_w_ri, q_w_rp, q_ri_rp = q_ri_w * q_w_rp = transpose(q_w_ri) * q_w_rp;
+  const Eigen::Matrix3d rot = t1.linear().inverse() * t2.linear();
+  radOfChange = acos( (rot.trace() - 1) / 2 );
 }
 
 class DummyNeedleTracker : public DummyNeedleModifier

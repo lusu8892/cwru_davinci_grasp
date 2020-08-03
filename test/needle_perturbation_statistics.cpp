@@ -80,11 +80,11 @@ const Eigen::Quaterniond& q1,
 const Eigen::Quaterniond& q2
 )
 {
-    // q_w_ri, q_w_rp, q_ri_rp = q_ri_w * q_w_rp = transpose(q_w_ri) * q_w_rp;
-    const Eigen::Quaterniond q = q1.inverse() * q2;
-    radOfChange = 2 * acos(q.w());
-    if (!perturb)
-      radOfChange *= -1;
+  // q_w_ri, q_w_rp, q_ri_rp = q_ri_w * q_w_rp = transpose(q_w_ri) * q_w_rp;
+  const Eigen::Quaterniond q = q1.inverse() * q2;
+  radOfChange = 2 * acos(q.w());
+  if (!perturb)
+    radOfChange *= -1;
 }
 
 int main(int argc, char** argv)

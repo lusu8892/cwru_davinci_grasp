@@ -190,6 +190,9 @@ bool plan_only
 
       if (able_to_pick && !plan_only)
       {
+        selected_grasp_info_ = defined_grasp_info_;
+        ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)selected_grasp_info_.graspParamInfo.grasp_id);
+
         able_to_pick = executePickupTraj();
         m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
         ROS_INFO("Object has been picked up");
@@ -522,6 +525,8 @@ bool plan_only
   if (able_to_pick && !plan_only)
   {
     selected_grasp_info_ = selected_grasp_info;
+    ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)selected_grasp_info_.graspParamInfo.grasp_id);
+
     able_to_pick = executePickupTraj();
     m_pSupportArmGroup->get_fresh_position(graspedJointPosition_);
     ROS_INFO("Object has been picked up");
@@ -579,20 +584,13 @@ const NeedlePickMode pickMode
         pPickPlace_->visualizePlan(pGoodPlan);
         std::vector<plan_execution::ExecutableTrajectory> graspPath = pGoodPlan->trajectories_;
         convertPathToTrajectory(graspPath, graspTrajectories_);
-        if (possible_grasps_msgs.size() == 1 && pickMode == NeedlePickMode::DEFINED)
+        if (possible_grasps_msgs.size() == 1 && (pickMode == NeedlePickMode::DEFINED || pickMode == NeedlePickMode::SELECT))
         {
-          selected_grasp_info_ = defined_grasp_info_;
-        }
-        else if (possible_grasps_msgs.size() == 1 && pickMode == NeedlePickMode::SELECT)
-        {
-          ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)i);
-          ROS_INFO("Prepared to call debugger");
-          ros::Duration(1.0).sleep();
           return true;
         }
-        selected_grasp_info_ = possible_grasps_[i];
 
-        ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)i);
+        selected_grasp_info_ = possible_grasps_[i];
+        ROS_INFO("Grasp Planning succeeded at %d th grasp pose", (int)selected_grasp_info_.graspParamInfo.grasp_id);
         ROS_INFO("Prepared to call debugger");
         ros::Duration(1.0).sleep();
         return true;
