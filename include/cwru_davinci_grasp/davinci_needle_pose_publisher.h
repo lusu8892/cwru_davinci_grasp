@@ -54,6 +54,8 @@ public :
   const ros::NodeHandle &nh
   );
 
+  virtual ~DummyNeedleModifier(){}
+
   bool perturbNeedlePose
   (
   double perturbRadian,
@@ -296,16 +298,20 @@ public :
   const ros::NodeHandle &nh
   );
 
-  bool publishNeedlePose();
+  virtual ~DummyNeedleTracker(){}
 
-  bool publishNeedlePoseWithNose();
+  virtual bool publishNeedlePose();
+
 protected:
   bool getNeedlePose();
 
 protected:
-  ros::Publisher                m_NeedlePosePub;
+  ros::Publisher                        m_NeedlePosePub;
 
-  geometry_msgs::PoseStamped    m_StampedNeedlePose;
+  geometry_msgs::PoseStamped            m_StampedNeedlePose;
+
+  Eigen::Affine3d                       m_NeedlePoseWithNoise;
+  Eigen::Affine3d                       m_IdealNeedlePose;
 };
 
 DummyNeedleTracker::DummyNeedleTracker
@@ -326,24 +332,6 @@ bool DummyNeedleTracker::publishNeedlePose()
   return true;
 }
 
-bool DummyNeedleTracker::publishNeedlePoseWithNose()
-{
-  if (!getNeedlePose())
-    return false;
-
-  // G_wn
-  // G_wn * (Rot_o/n, T == 0)
-  // (I, T.z + std::normal_distribution(0.002, 0.0001)) * G_wn
-  // (I, T.z + 0.002) * G_wn *(Rot_o/n, T == 0)
-
-  // adding depth error camera's z axis
-  // adding rotational error needle's z axis
-
-  // m_StampedNeedlePose.pose.position.z += 
-  // m_NeedlePosePub.publish(m_StampedNeedlePose);
-  return true;
-}
-
 bool DummyNeedleTracker::getNeedlePose
 (
 )
@@ -359,3 +347,78 @@ bool DummyNeedleTracker::getNeedlePose
   m_StampedNeedlePose.pose = m_NeedleState.response.pose;
   return true;
 }
+
+class DummyNeedleTrackerWithDepthNoise : public DummyNeedleTracker
+{
+public :
+  DummyNeedleTrackerWithDepthNoise
+  (
+  const ros::NodeHandle &nh
+  ) : DummyNeedleTracker(nh)
+  {
+    //  blank
+  }
+
+  virtual ~DummyNeedleTrackerWithDepthNoise(){}
+
+  virtual bool publishNeedlePose() override
+  {
+    if (!getNeedlePose())
+      return false;
+
+    tf::poseMsgToEigen(m_StampedNeedlePose.pose, m_IdealNeedlePose);
+
+    m_NoiseVec.z() = m_TransNoise(m_RandSeed);
+
+    // (I, T.z + std::normal_distribution(0.002, 0.0001)) * G_wn
+    m_NeedlePoseWithNoise = m_IdealNeedlePose.pretranslate(m_NoiseVec);
+
+    tf::poseEigenToMsg(m_NeedlePoseWithNoise, m_StampedNeedlePose.pose);
+
+    m_NeedlePosePub.publish(m_StampedNeedlePose);
+
+    return true;
+  }
+
+protected:
+  std::normal_distribution<double>      m_TransNoise{0.002, 0.0001};
+
+  Eigen::Vector3d                       m_NoiseVec = Eigen::Vector3d::Zero();
+};
+
+class DummyNeedleTrackerWithRotationNoise : public DummyNeedleTracker
+{
+public :
+  DummyNeedleTrackerWithRotationNoise
+  (
+  const ros::NodeHandle &nh
+  ) : DummyNeedleTracker(nh)
+  {
+    //  blank
+  }
+
+  virtual ~DummyNeedleTrackerWithRotationNoise(){}
+
+  virtual bool publishNeedlePose() override
+  {
+    if (!getNeedlePose())
+      return false;
+
+    tf::poseMsgToEigen(m_StampedNeedlePose.pose, m_IdealNeedlePose);
+
+    // G_wn * (Rot_o/n, T == 0)
+    // (I, T.z + 0.002) * G_wn *(Rot_o/n, T == 0)
+    m_NoiseMat = Eigen::AngleAxisd(m_OrientNoise(m_RandSeed), m_Zaxis);
+    m_NeedlePoseWithNoise = m_IdealNeedlePose.rotate(m_NoiseMat);
+
+    tf::poseEigenToMsg(m_NeedlePoseWithNoise, m_StampedNeedlePose.pose);
+
+    m_NeedlePosePub.publish(m_StampedNeedlePose);
+  }
+
+protected:
+  std::normal_distribution<double>      m_OrientNoise{0.02, 0.001};
+
+  Eigen::Vector3d                       m_Zaxis = Eigen::Vector3d::UnitZ();
+  Eigen::Matrix3d                       m_NoiseMat;
+};

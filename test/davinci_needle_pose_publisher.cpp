@@ -45,11 +45,43 @@ int main(int argc, char** argv)
 
   ros::NodeHandle nh;
   ros::Rate loopRate(2);
-  DummyNeedleTracker needleTracker(nh);
+
+  // mode == 0: accurate tracking
+  // mode == 1: error on camera's z axis
+  // mode == 2: error on needle's orientation
+  DummyNeedleTracker * needleTracker = nullptr;
+
+  int mode = 0;
+  if (argc == 2)
+  {
+    mode = atoi(argv[1]);
+  }
+
+  switch (mode)
+  {
+    case 0:
+      needleTracker = new DummyNeedleTracker(nh);
+      break;
+    case 1:
+      needleTracker = new DummyNeedleTrackerWithDepthNoise(nh);
+      break;
+    case 2:
+      needleTracker = new DummyNeedleTrackerWithRotationNoise(nh);
+      break;
+  }
+
+  if (!needleTracker)
+  {
+    ROS_ERROR("davinci_needle_pose_publisher: No needle tracker is instantiated");
+    return 0;
+  }
+
   while (ros::ok())
   {
-    needleTracker.publishNeedlePose();
+    needleTracker->publishNeedlePose();
     loopRate.sleep();
   }
+
+  delete needleTracker;
   return 0;
 }
