@@ -1,5 +1,13 @@
 <launch>
-    <node name="davinci_needle_pose_publisher" pkg="cwru_davinci_grasp" type="davinci_needle_pose_publisher" respawn="false" output="screen"/>
+    # specify the needle tracking mode
+    <arg name = "pub_mode" default = "0"/>
+
+    <node name="davinci_needle_pose_publisher" pkg="cwru_davinci_grasp" type="davinci_needle_pose_publisher_main" args="$(arg pub_mode)" respawn="false" output="screen">
+        <param name="trans_noise_mean"    type="double" value="0.002"/>
+        <param name="trans_noise_stddev"  type="double" value="0.0001"/>
+        <param name="orient_noise_mean"   type="double" value="0.02"/>
+        <param name="orient_noise_stddev" type="double" value="0.001"/>
+    </node>
 
     # specify which arm is going to perform needle grasp
     <arg name = "which_arm" default = "psm_one"/>

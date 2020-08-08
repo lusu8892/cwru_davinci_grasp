@@ -149,6 +149,8 @@ add_library(cwru_davinci_grasp
   src/davinci_needle_grasper_action_server.cpp)
 #add_library(davinci_needle_grasper_action_server src/davinci_needle_grasper_action_server.cpp)
 
+add_library(davinci_needle_pose_publisher src/davinci_needle_pose_publisher)
+
 # add_dependencies(davinci_simple_grasp_action_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the library
@@ -161,7 +163,7 @@ add_library(cwru_davinci_grasp
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(davinci_simple_needle_grasp_test_node test/davinci_simple_needle_grasp_test_node.cpp)
 add_executable(davinci_simple_needle_grasper_main src/davinci_simple_needle_grasper_main.cpp)
-add_executable(davinci_needle_pose_publisher test/davinci_needle_pose_publisher.cpp)
+add_executable(davinci_needle_pose_publisher_main test/davinci_needle_pose_publisher_main.cpp)
 add_executable(davinci_test_grasping_main src/davinci_test_grasping_main.cpp)
 add_executable(davinci_needle_grasper_action_server_main src/davinci_needle_grasper_action_server_main.cpp)
 add_executable(davinci_grasp_info_writer src/davinci_grasp_info_writer.cpp)
@@ -186,12 +188,12 @@ add_dependencies(cwru_davinci_grasp ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(cwru_davinci_grasp ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_simple_needle_grasp_test_node cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_simple_needle_grasper_main cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(davinci_needle_pose_publisher ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(davinci_needle_pose_publisher_main davinci_needle_pose_publisher ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(davinci_test_grasping_main cwru_davinci_grasp  ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(davinci_needle_grasper_action_server_main cwru_davinci_grasp ${catkin_LIBRARIES})
 target_link_libraries(davinci_grasp_info_writer cwru_davinci_grasp ${catkin_LIBRARIES})
-target_link_libraries(davinci_needle_pose_perturber ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(needle_perturbation_statistics ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(davinci_needle_pose_perturber davinci_needle_pose_publisher ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(needle_perturbation_statistics davinci_needle_pose_publisher ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 #############
 ## Install ##

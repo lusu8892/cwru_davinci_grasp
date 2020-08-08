@@ -44,8 +44,9 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "davinci_needle_pose_perturber");
 
   ros::NodeHandle nh;
+  ros::NodeHandle nhPriv("~");
   ros::Rate loopRate(0.1);
-  DummyNeedleTracker needleTracker(nh);
+  DummyNeedleTracker needleTracker(nh, nhPriv);
 
   // grasp_pose
   // part_id:0

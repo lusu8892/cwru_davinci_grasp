@@ -90,8 +90,9 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "needle_perturbation_statistics");
 
   ros::NodeHandle nh;
+  ros::NodeHandle nhPriv("~");
   ros::Rate loopRate(0.1);
-  DummyNeedleModifier needleTracker(nh);
+  DummyNeedleModifier needleTracker(nh, nhPriv);
 
   ros::ServiceClient stickyFingerClient = nh.serviceClient<std_srvs::SetBool>("sticky_finger/PSM1_tool_wrist_sca_ee_link_1");
 

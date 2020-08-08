@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2018, Case Western Reserve University
+ *  Copyright (c) 2020, Case Western Reserve University
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -44,29 +44,30 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "davinci_needle_pose_publisher");
 
   ros::NodeHandle nh;
+  ros::NodeHandle nhPriv("~");
   ros::Rate loopRate(2);
 
-  // mode == 0: accurate tracking
-  // mode == 1: error on camera's z axis
-  // mode == 2: error on needle's orientation
+  // pubMode == 0: accurate tracking
+  // pubMode == 1: error on camera's z axis
+  // pubMode == 2: error on needle's orientation
   DummyNeedleTracker * needleTracker = nullptr;
 
-  int mode = 0;
+  int pubMode = 0;
   if (argc == 2)
   {
-    mode = atoi(argv[1]);
+    pubMode = atoi(argv[1]);
   }
 
-  switch (mode)
+  switch (pubMode)
   {
     case 0:
-      needleTracker = new DummyNeedleTracker(nh);
+      needleTracker = new DummyNeedleTracker(nh, nhPriv);
       break;
     case 1:
-      needleTracker = new DummyNeedleTrackerWithDepthNoise(nh);
+      needleTracker = new DummyNeedleTrackerWithDepthNoise(nh, nhPriv);
       break;
     case 2:
-      needleTracker = new DummyNeedleTrackerWithRotationNoise(nh);
+      needleTracker = new DummyNeedleTrackerWithRotationNoise(nh, nhPriv);
       break;
   }
 
@@ -78,7 +79,8 @@ int main(int argc, char** argv)
 
   while (ros::ok())
   {
-    needleTracker->publishNeedlePose();
+    if (!needleTracker->publishNeedlePose())
+      break;
     loopRate.sleep();
   }
 
