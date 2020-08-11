@@ -417,8 +417,10 @@ GraspInfo &grasp_info
   orientaion <<
      cos(theta_1) * sin(theta_3) - cos(theta_3) * sin(theta_1) * sin(theta_2),
     -cos(theta_1) * cos(theta_3) - sin(theta_1) * sin(theta_2) * sin(theta_3),
-    cos(theta_2) * sin(theta_1), -cos(theta_2) * cos(theta_3),
-    -cos(theta_2) * sin(theta_3), -sin(theta_2),
+    cos(theta_2) * sin(theta_1),
+    -cos(theta_2) * cos(theta_3),
+    -cos(theta_2) * sin(theta_3),
+    -sin(theta_2),
     sin(theta_1) * sin(theta_3) + cos(theta_1) * cos(theta_3) * sin(theta_2),
     cos(theta_1) * sin(theta_2) * sin(theta_3) - cos(theta_3) * sin(theta_1),
     -cos(theta_1) * cos(theta_2);

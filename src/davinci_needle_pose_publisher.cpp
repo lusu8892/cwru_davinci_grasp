@@ -78,6 +78,22 @@ Eigen::Affine3d& currentNeedlePose
   return true;
 }
 
+bool DummyNeedleModifier::getCurrentNeedlePose
+(
+geometry_msgs::Pose& currentNeedlePose
+)
+{
+  if (!m_NeedlePoseClient.call(m_NeedleState))
+  {
+    ROS_WARN("DummyNeedleModifier: Failed getting neeedle pose from gazebo");
+    return false;
+  }
+
+  currentNeedlePose = m_NeedleState.response.pose;
+
+  return true;
+}
+
 bool DummyNeedleModifier::perturbNeedlePose
 (
 double perturbRadian,
@@ -139,9 +155,9 @@ bool randomRotAxis
   }
   else
   {
-    if (m_Distribution(m_RandSeed))
+    if (m_BernoulliDistribution(m_RandSeed))
     {
-      if(m_Distribution(m_RandSeed))
+      if(m_BernoulliDistribution(m_RandSeed))
       {
         rotAxis = 't';
         perturbAxisOfRotWrtWorldFrame = vecFromNeedleOriginToGraspPointWrtWorldFrame.cross(needleFrameZaxisProjectedOnWorldFrame);
@@ -288,6 +304,8 @@ const ros::NodeHandle &nhPriv
   m_PrivNodeHandle.getParam("trans_noise_stddev", transNoiseStddev);
 
   m_TransNoise = std::normal_distribution<double>(transNoiseMean, transNoiseStddev);
+
+  m_NeedlePosePub = m_NodeHandle.advertise<geometry_msgs::PoseStamped>("/updated_needle_pose_wnoise", 1000);
 }
 
 bool DummyNeedleTrackerWithDepthNoise::publishNeedlePose()
@@ -338,6 +356,8 @@ const ros::NodeHandle &nhPriv
   m_PrivNodeHandle.getParam("orient_noise_stddev", orientNoiseStddev);
 
   m_OrientNoise = std::normal_distribution<double>(orientNoiseMean, orientNoiseStddev);
+
+  m_NeedlePosePub = m_NodeHandle.advertise<geometry_msgs::PoseStamped>("/updated_needle_pose_wnoise", 1000);
 }
 
 bool DummyNeedleTrackerWithRotationNoise::publishNeedlePose()
@@ -349,7 +369,69 @@ bool DummyNeedleTrackerWithRotationNoise::publishNeedlePose()
 
   // G_wn * (Rot_o/n, T == 0)
   // (I, T.z + 0.002) * G_wn *(Rot_o/n, T == 0)
-  m_NoiseMat = Eigen::AngleAxisd(m_OrientNoise(m_RandSeed), m_Zaxis);
+  double radianNoise = m_OrientNoise(m_RandSeed);
+  // if (m_BernoulliDistribution(m_RandSeed))
+  //   radianNoise *= -1;
+  ROS_WARN("DummyNeedleTrackerWithRotationNoise: Radian Noise is %f", radianNoise);
+  m_NoiseMat = Eigen::AngleAxisd(radianNoise, m_Zaxis);
+  m_NeedlePoseWithNoise = m_IdealNeedlePose.rotate(m_NoiseMat);
+
+  tf::poseEigenToMsg(m_NeedlePoseWithNoise, m_StampedNeedlePose.pose);
+
+  m_NeedlePosePub.publish(m_StampedNeedlePose);
+
+  return true;
+}
+
+DummyNeedleTrackerWithRandRotNoise::DummyNeedleTrackerWithRandRotNoise
+(
+const ros::NodeHandle &nh,
+const ros::NodeHandle &nhPriv
+) : DummyNeedleTrackerWithRotationNoise(nh, nhPriv), m_UniformRealDistribution(-1.0, 1.0)
+{
+  if (!m_PrivNodeHandle.hasParam("orient_noise_mean"))
+  {
+    ROS_ERROR_STREAM("DummyNeedleTrackerWithRandRotNoise inputs parameter `orient_noise_mean` missing "
+                     "from rosparam server. "
+                     "Searching in namespace: "
+                     << m_PrivNodeHandle.getNamespace());
+    return;
+  }
+  double orientNoiseMean;
+  m_PrivNodeHandle.getParam("orient_noise_mean", orientNoiseMean);
+
+  if (!m_PrivNodeHandle.hasParam("orient_noise_stddev"))
+  {
+    ROS_ERROR_STREAM("DummyNeedleTrackerWithRandRotNoise inputs parameter `orient_noise_stddev` missing "
+                     "from rosparam server. "
+                     "Searching in namespace: "
+                     << m_PrivNodeHandle.getNamespace());
+    return;
+  }
+  double orientNoiseStddev;
+  m_PrivNodeHandle.getParam("orient_noise_stddev", orientNoiseStddev);
+
+  m_OrientNoise = std::normal_distribution<double>(orientNoiseMean, orientNoiseStddev);
+
+  m_NeedlePosePub = m_NodeHandle.advertise<geometry_msgs::PoseStamped>("/updated_needle_pose_wnoise", 1000);
+
+  m_RandAxis = Eigen::Vector3d(m_UniformRealDistribution(m_RandSeed), m_UniformRealDistribution(m_RandSeed), m_UniformRealDistribution(m_RandSeed)).normalized();
+  ROS_WARN("DummyNeedleTrackerWithRandRotNoise: Random Rotation Axis is %f, %f, %f", m_RandAxis[0], m_RandAxis[1], m_RandAxis[2]);
+}
+
+bool DummyNeedleTrackerWithRandRotNoise::publishNeedlePose()
+{
+  if (!getNeedlePose())
+      return false;
+
+  tf::poseMsgToEigen(m_StampedNeedlePose.pose, m_IdealNeedlePose);
+
+  // G_wn * (Rot_o/n, T == 0)
+  // (I, T.z + 0.002) * G_wn *(Rot_o/n, T == 0)
+  double radianNoise = m_OrientNoise(m_RandSeed);
+  // ROS_WARN("DummyNeedleTrackerWithRandRotNoise: Radian Noise is %f", radianNoise);
+
+  m_NoiseMat = Eigen::AngleAxisd(radianNoise, m_RandAxis);
   m_NeedlePoseWithNoise = m_IdealNeedlePose.rotate(m_NoiseMat);
 
   tf::poseEigenToMsg(m_NeedlePoseWithNoise, m_StampedNeedlePose.pose);

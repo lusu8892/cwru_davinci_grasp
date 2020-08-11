@@ -69,6 +69,9 @@ int main(int argc, char** argv)
     case 2:
       needleTracker = new DummyNeedleTrackerWithRotationNoise(nh, nhPriv);
       break;
+    case 3:
+      needleTracker = new DummyNeedleTrackerWithRandRotNoise(nh, nhPriv);
+      break;
   }
 
   if (!needleTracker)

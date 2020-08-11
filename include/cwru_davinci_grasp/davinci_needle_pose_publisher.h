@@ -72,6 +72,11 @@ public :
   Eigen::Affine3d& perturbedNeedlePose
   );
 
+  bool getCurrentNeedlePose
+  (
+  geometry_msgs::Pose& currentNeedlePose
+  );
+
   bool setNeedlePose
   (
   double x,
@@ -103,7 +108,7 @@ protected:
   gazebo_msgs::GetModelState    m_NeedleState;
   gazebo_msgs::SetModelState    m_PerturbedNeedleState;
 
-  std::bernoulli_distribution   m_Distribution;
+  std::bernoulli_distribution   m_BernoulliDistribution;
   std::default_random_engine    m_Generator;
   std::random_device            m_RandSeed;
 };
@@ -170,4 +175,22 @@ protected:
 
   Eigen::Vector3d                       m_Zaxis = Eigen::Vector3d::UnitZ();
   Eigen::Matrix3d                       m_NoiseMat;
+};
+
+class DummyNeedleTrackerWithRandRotNoise : public DummyNeedleTrackerWithRotationNoise
+{
+public :
+  DummyNeedleTrackerWithRandRotNoise
+  (
+  const ros::NodeHandle &nh,
+  const ros::NodeHandle &nhPriv
+  );
+
+  virtual ~DummyNeedleTrackerWithRandRotNoise(){}
+
+  virtual bool publishNeedlePose() override;
+
+protected:
+  Eigen::Vector3d                         m_RandAxis;
+  std::uniform_real_distribution<double>  m_UniformRealDistribution;
 };
