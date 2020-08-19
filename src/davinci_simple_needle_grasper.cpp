@@ -448,7 +448,16 @@ const NeedlePickMode pickMode
   simpleNeedleGraspGenerator_->generateSimpleNeedleGrasps(needle_pose, needleGraspData_, possible_grasps_ ,possible_grasps_msgs, sort);
   needleGraspData_.print();
 
-  return planGraspPath(needle_name, possible_grasps_msgs, pickMode);
+  if (!planGraspPath(needle_name, possible_grasps_msgs, pickMode))
+    return false;
+
+  ROS_WARN("DavinciSimpleNeedleGrasper: The select grasp's parameter: %f, %f, %f, %f", selected_grasp_info_.graspParamInfo.param_0,
+                                                                                       selected_grasp_info_.graspParamInfo.param_1,
+                                                                                       selected_grasp_info_.graspParamInfo.param_2,
+                                                                                       selected_grasp_info_.graspParamInfo.param_3);
+  ROS_WARN("DavinciSimpleNeedleGrasper: The select grasp's part is : %d. Distance to optimal: %f", selected_grasp_info_.part_id, selected_grasp_info_.theta_diff_avg);
+
+  return true;
 }
 
 bool DavinciSimpleNeedleGrasper::definedPickNeedle

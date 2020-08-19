@@ -134,7 +134,7 @@ bool sort
     if (verbose_)
     {
       // Convert pose to global frame (base_link)
-      tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * possible_grasp_info[i].grasp_pose.inverse(), grasp_pose_msg.pose);
+      tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * (possible_grasp_info[i].grasp_pose.inverse()), grasp_pose_msg.pose);
       if(visual_tools_)
       {
         visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
@@ -143,7 +143,7 @@ bool sort
 
     // ------------------------------------------------------------------------
     // Convert pose to global frame (base_link)
-    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * possible_grasp_info[i].grasp_pose.inverse(), grasp_pose_msg.pose);
+    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * (possible_grasp_info[i].grasp_pose.inverse()), grasp_pose_msg.pose);
 
     // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
     new_grasp.grasp_pose = grasp_pose_msg;
@@ -170,7 +170,7 @@ bool sort
     new_grasp.pre_grasp_approach = pre_grasp_approach;
 
     // Retreat
-    post_grasp_retreat.direction.header.frame_id = needleGraspData.ee_tool_tip_link_;
+    post_grasp_retreat.direction.header.frame_id = needleGraspData.base_link_;
     post_grasp_retreat.direction.vector.x = 0;
     post_grasp_retreat.direction.vector.y = 0;
     post_grasp_retreat.direction.vector.z = -1; // Retreat direction (pos z axis)
@@ -266,7 +266,7 @@ bool has_grasp_pose
   if (verbose_)
   {
     // Convert pose to global frame (base_link)
-    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose_info.grasp_pose.inverse(), grasp_pose_msg.pose);
+    tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * (grasp_pose_info.grasp_pose.inverse()), grasp_pose_msg.pose);
     if(visual_tools_)
     {
       visual_tools_->publishArrow(grasp_pose_msg.pose, rviz_visual_tools::GREEN);
@@ -275,7 +275,7 @@ bool has_grasp_pose
 
   // ------------------------------------------------------------------------
   // Convert pose to global frame (base_link)
-  tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * grasp_pose_info.grasp_pose.inverse(), grasp_pose_msg.pose);
+  tf::poseEigenToMsg(needle_pose_wrt_base_frame_ * (grasp_pose_info.grasp_pose.inverse()), grasp_pose_msg.pose);
 
   // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
   new_grasp.grasp_pose = grasp_pose_msg;
@@ -302,7 +302,7 @@ bool has_grasp_pose
   new_grasp.pre_grasp_approach = pre_grasp_approach;
 
   // Retreat
-  post_grasp_retreat.direction.header.frame_id = needleGraspData.ee_tool_tip_link_;
+  post_grasp_retreat.direction.header.frame_id = needleGraspData.base_link_;
   post_grasp_retreat.direction.vector.x = 0;
   post_grasp_retreat.direction.vector.y = 0;
   post_grasp_retreat.direction.vector.z = -1; // Retreat direction (pos z axis)
