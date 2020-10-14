@@ -45,7 +45,7 @@ psm_one_gripper:
 
     retreat_desired_dist: 0.010
 
-    retreat_min_dist: 0.005
+    retreat_min_dist: 0.008
 
     angle_resolution : 16
 
@@ -90,6 +90,6 @@ psm_two_gripper:
 
     retreat_desired_dist: 0.010
 
-    retreat_min_dist: 0.005
+    retreat_min_dist: 0.008
 
     angle_resolution : 16

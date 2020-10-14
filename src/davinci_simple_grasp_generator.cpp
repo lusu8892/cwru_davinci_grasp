@@ -147,7 +147,8 @@ bool sort
 
     // The position of the end-effector for the grasp relative to a reference frame (that is always specified elsewhere, not in this message)
     new_grasp.grasp_pose = grasp_pose_msg;
-    new_grasp.grasp_quality = possible_grasp_info[i].theta_diff_avg;
+    // new_grasp.grasp_quality = -1.0 * possible_grasp_info[i].theta_diff_avg;
+    new_grasp.grasp_quality = 0.0;
     // Other ------------------------------------------------------------------------------------------------
 
     // the maximum contact force to use while grasping (<=0 to disable)
