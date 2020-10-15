@@ -109,7 +109,7 @@ int main(int argc, char** argv)
   {
     int pick_mode = 0;
 
-    std::cout << "How do you want to pick needle 0 for DEFINED pick, 1 for OPTIMAL pick, 2 for FINDGOOD pick, other number is for RANDOM pick: ";
+    std::cout << "How do you want to pick needle 0 for DEFINED pick, 1 for SUBOPTIMAL pick, 2 for FINDGOOD pick, other number is for RANDOM pick: ";
     std::cin >> pick_mode;
     if (pick_mode == 0)
     {
@@ -125,13 +125,13 @@ int main(int argc, char** argv)
     else if(pick_mode == 1)
     {
       // defined needle pick up
-      if(!needleGrasper.pickNeedle(needle_name, NeedlePickMode::OPTIMAL))
+      if(!needleGrasper.pickNeedle(needle_name, NeedlePickMode::SUBOPTIMAL))
       {
-        ROS_INFO("Main function: failed to perform OPTIMAL needle pick up");
+        ROS_INFO("Main function: failed to perform SUBOPTIMAL needle pick up");
         ros::shutdown();
         return 0;
       }
-      ROS_INFO("Main function: successfully performed OPTIMAL needle pick up");
+      ROS_INFO("Main function: successfully performed SUBOPTIMAL needle pick up");
       ROS_INFO("Main function: the selected grasp index is: %d",
                needleGrasper.getSelectedGraspInfo().graspParamInfo.grasp_id);
     }

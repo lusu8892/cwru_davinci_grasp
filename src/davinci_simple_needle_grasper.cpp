@@ -205,9 +205,9 @@ bool plan_only
       }
     }
 
-    case NeedlePickMode::OPTIMAL:
+    case NeedlePickMode::SUBOPTIMAL:
     {
-      ROS_INFO("Robot is going to grasp needle in OPTIMAL mode");
+      ROS_INFO("Robot is going to grasp needle in SUBOPTIMAL mode");
       able_to_pick = optimalPickNeedle(needle_name,
                                        needle_pose,
                                        possible_grasps_msgs_,
@@ -222,7 +222,7 @@ bool plan_only
       }
       else
       {
-        ROS_INFO("Can not pick needle in OPTIMAL mode");
+        ROS_INFO("Can not pick needle in SUBOPTIMAL mode");
         return able_to_pick;
       }
     }
@@ -484,7 +484,7 @@ std::vector<moveit_msgs::Grasp>& possible_grasps_msgs,
 bool plan_only
 )
 {
-  return randomPickNeedle(needle_name, needle_pose, possible_grasps_msgs, plan_only, true, NeedlePickMode::OPTIMAL);
+  return randomPickNeedle(needle_name, needle_pose, possible_grasps_msgs, plan_only, true, NeedlePickMode::SUBOPTIMAL);
 }
 
 bool DavinciSimpleNeedleGrasper::tryPickNeedle
@@ -564,7 +564,7 @@ const NeedlePickMode pickMode
 
   switch (pickMode)
   {
-    case NeedlePickMode::OPTIMAL :
+    case NeedlePickMode::SUBOPTIMAL :
       // continue to DEFINED
     case NeedlePickMode::FINDGOOD :
       // continue to DEFINED
