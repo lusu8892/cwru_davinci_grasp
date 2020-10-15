@@ -1,60 +1,95 @@
-base_link: 'world'  #this can be changed to any global reference frame
+base_link: 'davinci_endo_cam_l'  #this can be changed to any global reference frame
+
+needle_radius : 0.0125
+
+needle_mesh_mode_path: 'package://sim_gazebo/props/needle/mesh/needle_thin.dae'
 
 # =====================================================
 psm_one_gripper:
     end_effector_name: 'psm_one_gripper'  #ee group name
 
     #actuated joints in end effector
-    joints : ['PSM1/jaw']
+    joints : ['PSM1_jaw']
 
     #open position
-    pregrasp_posture : [0.523]  #define gripper jaw's open angle
-    pregrasp_time_from_start : 4.0
+    pregrasp_posture : [0.75]  #define gripper jaw's open angle
+    pregrasp_time_from_start : 1.0
 
     #close position
-    grasp_posture : [0.262]  #define gripper jaw's close angle when hold object
-    grasp_time_from_start : 4.0
+    grasp_posture : [-0.5]  #define gripper jaw's close angle when hold object
+    grasp_time_from_start : 1.0
 
-    end_effector_parent_link: 'PSM1/tool_wrist_sca_shaft_link'
+    end_effector_parent_link: 'PSM1_tool_wrist_sca_shaft_link'
 
-    end_effector_tool_tip_link: 'PSM1/tool_tip_link'
+    end_effector_tool_tip_link: 'PSM1_tool_tip_link'
 
     #normal needle grasping parameters
-    theta_normal : [0.004, 0.0, 0.0, 0.0833]
+    theta_normal : [0.003, 0.0, 0.0, 0.0833]
 
     #grasping parameters limits
-    theta_limits : [0.0, 0.005, -1.5708, 1.5708, 0.0, 6.283, 0.0, 3.1415]
+    #theta_limits : [0.003, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 2.97483]
+    theta_limits : [0.002, 0.004, 0.0, 0.0, -3.1415, 3.1415, 0.0833, 2.7249]
 
     #possible needle grasping search resolution
-    theta_resolution : [0.001, 0.2094, 0.2094, 0.2094]
+    #theta_resolution : [0.001, 1.03, 1.047, 0.4569]
+    theta_resolution : [0.001, 1.04716, 1.04716, 0.44025]
+    #theta_resolution : [0.001, 1.047 ,1.047, 0.628]
+    #theta_resolution : [0.001, 0.4188 ,0.4188, 0.2094]
     #theta_resolution : [0.001, 0.2094, 0.1047, 0.2094]
+
+    theta_weight : [1.0, 100.0, 0.1, 0.1]
+
+    approach_desired_dist : 0.015
+
+    approach_min_dist : 0.010
+
+    retreat_desired_dist: 0.010
+
+    retreat_min_dist: 0.008
+
+    angle_resolution : 16
 
 # =====================================================
 psm_two_gripper:
     end_effector_name: 'psm_two_gripper'  #ee group name
 
     #actuated joints in end effector
-    joints : ['PSM2/jaw']
+    joints : ['PSM2_jaw']
 
     #open position
-    pregrasp_posture : [0.523]  #define gripper jaw's open angle
-    pregrasp_time_from_start : 4.0
+    pregrasp_posture : [0.75]  #define gripper jaw's open angle
+    pregrasp_time_from_start : 1.0
 
     #close position
-    grasp_posture : [0.262]  #define gripper jaw's close angle when hold object
-    grasp_time_from_start : 4.0
+    grasp_posture : [-0.5]  #define gripper jaw's close angle when hold object
+    grasp_time_from_start : 1.0
 
-    end_effector_parent_link: 'PSM2/tool_wrist_sca_shaft_link'
+    end_effector_parent_link: 'PSM2_tool_wrist_sca_shaft_link'
 
-    end_effector_tool_tip_link: 'PSM2/tool_tip_link'
+    end_effector_tool_tip_link: 'PSM2_tool_tip_link'
 
     #normal needle grasping parameters
-    theta_normal : [0.004, 0.0, 0.0, 0.0833]
+    theta_normal : [0.003, 0.0, 0.0, 0.0833]
 
     #grasping parameters limits
-    theta_limits : [0.0, 0.005, -1.5708, 1.5708, 0.0, 6.283, 0.0, 3.1415]
-
+    #theta_limits : [0.003, 0.004, -2.6, 0.5, -3.1415, 3.1415, 0.2618, 2.97483]
+    # theta_limits : [0.004, 0.006, 0.0, 0.0, -3.1415, 3.1415, 0.16667, 2.97483]
+    theta_limits : [0.002, 0.004, 0.0, 0.0, -3.1415, 3.1415, 0.0833, 2.7249]
     #possible needle grasping search resolution
-    theta_resolution : [0.001, 0.2094, 0.2094, 0.2094]
+    #theta_resolution : [0.001, 1.03, 1.047, 0.4569]
+    theta_resolution : [0.001, 1.04716, 1.04716, 0.44025]
+    #theta_resolution : [0.001, 1.047 ,1.047, 0.628]
+    #theta_resolution : [0.001, 0.4188 ,0.4188, 0.2094]
     #theta_resolution : [0.001, 0.2094, 0.1047, 0.2094]
 
+    theta_weight : [1.0, 100.0, 0.1, 0.1]
+
+    approach_desired_dist : 0.010
+
+    approach_min_dist : 0.005
+
+    retreat_desired_dist: 0.010
+
+    retreat_min_dist: 0.008
+
+    angle_resolution : 16

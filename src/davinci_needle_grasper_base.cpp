@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2018, Case Western Reserve University
+ *  Copyright (c) 2019, Case Western Reserve University
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,44 +32,44 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Su Lu <sxl924@case.edu>
- * Description: A needle pose publisher for testing simple needle grasping.
- * This node is to publish updated needle pose.
- */
+#include <cwru_davinci_grasp/davinci_needle_grasper_base.h>
 
-#include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
+using namespace cwru_davinci_grasp;
 
-int main(int argc, char** argv)
+DavinciNeedleGrasperBase::DavinciNeedleGrasperBase
+(
+const ros::NodeHandle &nh_priv,
+const std::string &planning_group_name,
+const std::string &ee_group_name
+)
+: nh_priv_(nh_priv)
 {
-  ros::init(argc, argv, "davinci_simple_needle_grasp_test_node");
+  nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
+  nh_priv_.param("ee_group_name", ee_group_name_, ee_group_name);
 
-  ros::NodeHandle nh;
-
-  ros::Publisher updated_needle_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("updated_needle_pose", 1000);
-
-  ros::Rate loop_rate(10);
-
-  geometry_msgs::PoseStamped needle_pose;
-  needle_pose.header.stamp = ros::Time::now();
-  needle_pose.header.frame_id = "world";
-  needle_pose.pose.position.x = -0.248;
-  needle_pose.pose.position.y = 0.0;
-  needle_pose.pose.position.z = 0.45;
-  needle_pose.pose.orientation.w = 1;
-  needle_pose.pose.orientation.x = 0;
-  needle_pose.pose.orientation.y = 0;
-  needle_pose.pose.orientation.z = 0;
-
-  while (ros::ok())
+  if (!needleGraspData_.loadRobotGraspData(nh_priv_, ee_group_name_))
   {
-    updated_needle_pose_pub.publish(needle_pose);
-
-    ros::spinOnce();
-
-    loop_rate.sleep();
+    ros::shutdown();
   }
-  return 0;
+
+  simpleNeedleGraspGenerator_.reset(new cwru_davinci_grasp::DavinciSimpleGraspGenerator());
 }
 
+DavinciNeedleGrasperBase::DavinciNeedleGrasperBase
+(
+const ros::NodeHandle &nh_priv,
+const std::string &planning_group_name
+)
+: nh_priv_(nh_priv)
+{
+  nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
+}
 
+const std::vector<GraspInfo>& DavinciNeedleGrasperBase::getAllPossibleNeedleGrasps
+(
+bool sort
+)
+{
+  simpleNeedleGraspGenerator_->graspGeneratorHelper(needleGraspData_, possible_grasps_, sort);
+  return possible_grasps_;
+}

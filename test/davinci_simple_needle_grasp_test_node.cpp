@@ -75,11 +75,11 @@ int main(int argc, char** argv)
   visual_tools->trigger();
 
   cwru_davinci_grasp::DavinciSimpleNeedleGrasper needleGrasper(node_handle, node_handle_priv, "psm_one",
-                                           "get_planning_scene", "planning_scene", "updated_needle_pose");
+                                           "/get_planning_scene", "/planning_scene", "/updated_needle_pose");
 
   geometry_msgs::PoseStamped needle_pose;
   needle_pose.header.stamp = ros::Time::now();
-  needle_pose.header.frame_id = "world";
+  needle_pose.header.frame_id = "davinci_endo_cam_l";
   needle_pose.pose.position.x = -0.248;
   needle_pose.pose.position.y = 0.0;
   needle_pose.pose.position.z = 0.45;
@@ -88,8 +88,11 @@ int main(int argc, char** argv)
   needle_pose.pose.orientation.y = 0;
   needle_pose.pose.orientation.z = 0;
 
-  needleGrasper.pickNeedle(needle_pose, "needle_r", cwru_davinci_grasp::NeedlePickMode::DEFINED);
-
+  needleGrasper.pickNeedle("needle_r",
+                           needle_pose,
+                           cwru_davinci_grasp::NeedlePickMode::DEFINED,
+                           false);
+ 
 
   while (ros::ok())
   {

@@ -1,6 +1,7 @@
 <launch>
-  <node name="davinci_needle_pose_publisher" pkg="cwru_davinci_grasp" type="davinci_needle_pose_publisher" respawn="false" output="screen"/>
-
+  <!--<node name="davinci_needle_pose_publisher" pkg="cwru_davinci_grasp" type="davinci_needle_pose_publisher" respawn="false" output="screen">
+    <rosparam command="load" file="$(find cwru_davinci_grasp)/config/grasping_and_needle_pose.yaml"/>
+  </node>-->
   # specify which arm is going to perform needle grasp
   <arg name = "which_arm" default = "psm_one"/>
 
@@ -10,7 +11,8 @@
   # specify to pick or place needle
   <arg name = "movement" default = "pick"/>
 
-  <node name="davinci_simple_needle_grasper_main" pkg="cwru_davinci_grasp" type="davinci_simple_needle_grasper_main" args="$(arg which_arm) $(arg needle_name) $(arg movement)" respawn="false" output="screen">
+  <node name="davinci_test_grasping_main" pkg="cwru_davinci_grasp" type="davinci_test_grasping_main" args="$(arg which_arm) $(arg needle_name) $(arg movement)" respawn="false" output="screen">
       <rosparam command="load" file="$(find cwru_davinci_grasp)/config/dvrk_psm_grasp_needle_data.yaml"/>
+      <rosparam command="load" file="$(find cwru_davinci_grasp)/config/grasping_and_needle_pose.yaml"/>
   </node>
 </launch>

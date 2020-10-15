@@ -1,0 +1,11 @@
+<launch>
+    # specify the needle tracking mode
+    <arg name = "pub_mode" default = "1"/>
+
+    <node name="davinci_needle_pose_publisher_with_noise" pkg="cwru_davinci_grasp" type="davinci_needle_pose_publisher_main" args="$(arg pub_mode)" respawn="false" output="screen">
+        <param name="trans_noise_mean"    type="double" value="0.001"/>
+        <param name="trans_noise_stddev"  type="double" value="0.000167"/>
+        <param name="orient_noise_mean"   type="double" value="0.07"/>
+        <param name="orient_noise_stddev" type="double" value="0.00167"/>
+    </node>
+</launch>

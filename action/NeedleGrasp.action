@@ -1,0 +1,27 @@
+#goal definition
+#the lines with the hash signs are merely comments
+#goal, result and feedback are defined by this fixed order, and separated by 3 hyphens
+
+#define messages constants:
+
+int32 GRASPING_FAILED                  = 0
+int32 GRASPING_SUCCESSED_DEFINED_GRASP = 1
+int32 GRASPING_SUCCESSED_RANDOM_GRASP  = 2
+int32 RELEASING_SUCCESSED              = 3
+int32 RELEASING_FAILED                 = 4
+
+#goal messages:
+string which_arm                                                                         # arm index, "psm_one" or "psm_two"
+string action                                                                            # the action to execute, "pick" or "release"
+string way_to_grasp                                                                      # the way to grasp the needle "DEFINED" or "RANDOM"
+string object_name
+
+---
+#result definition
+int32 result
+geometry_msgs/Transform grasp_transform
+---                                                                                       #
+#feedback: optional; could declare step number of trajectory in progress,                 #
+#currently there is no use for feedback                                                   #
+int32 fdbk                                                                                #
+                                                                                          #

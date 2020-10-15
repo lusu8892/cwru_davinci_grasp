@@ -48,7 +48,7 @@
 #include <moveit/robot_state/robot_state.h>
 namespace cwru_davinci_grasp
 {
-class DavinciNeeldeGraspData
+class DavinciNeedleGraspData
 {
 public:
   trajectory_msgs::JointTrajectory
@@ -56,11 +56,13 @@ public:
   trajectory_msgs::JointTrajectory
       grasp_posture_; // when the end effector is in "close" position
 
-  std::string base_link_; // name of global frame ( with z axis pointing up)
+  std::string base_link_; // name of global frame ( with z axis pointing up), the value will be assigned by the value in MoveIt! package config/.srdf
   std::string ee_parent_link_; // the last link in the kinematic chain before
                                // the end effector
   std::string ee_tool_tip_link_;
   std::string ee_group_;       // the end effector name
+
+  std::string needle_mesh_model_path_;
 
   int angle_resolution_; // generate grasps at PI/angle_resolution increments
 
@@ -97,6 +99,14 @@ public:
 
   double grasp_theta_3_max_;
 
+  double weight_0_;
+  
+  double weight_1_;
+  
+  double weight_2_;
+  
+  double weight_3_;
+
   std::vector<double> grasp_theta_0_list_;
 
   std::vector<double> grasp_theta_1_list_;
@@ -105,10 +115,11 @@ public:
 
   std::vector<double> grasp_theta_3_list_;
 
-  double approach_retreat_desired_dist_; // how far back from the grasp position
-                                         // the pregrasp phase should be
-  double approach_retreat_min_dist_;     // how far back from grasp position the
-                                         // pregrasp phase should be at minimum
+  double approach_desired_dist_; // how far back from the grasp position the pregrasp phase should be
+  double approach_min_dist_;     // how far back from grasp position the pregrasp phase should be at minimum
+
+  double retreat_desired_dist_;
+  double retreat_min_dist_;
 
   double object_size_; // for visualization
 
@@ -118,7 +129,7 @@ public:
    * @brief constructor
    * @return
    */
-  DavinciNeeldeGraspData();
+  DavinciNeedleGraspData();
 
   /**
    * @brief Loads grasp data from a yaml file (load from roslaunch)
