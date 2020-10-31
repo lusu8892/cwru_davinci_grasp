@@ -651,7 +651,7 @@ std::vector<trajectory_msgs::JointTrajectory>& executableTrajectory
     planedPath[i].trajectory_->getRobotTrajectoryMsg(ithTraj);
     executableTrajectory.push_back(ithTraj.joint_trajectory);
     double t = 0;
-    double time = (i == 1 || i == 3) ? 0.1 : 0.2;
+    double time = (i == 1 || i == 3) ? 0.05 : 0.1;
     for (std::size_t j = 0; j < executableTrajectory[i].points.size(); ++j)
     {
       t += time;
@@ -935,41 +935,41 @@ bool DavinciSimpleNeedleGrasper::executePickupTraj
   ros::spinOnce();
   for (std::size_t i = 0; i < graspTrajectories_.size(); ++i)
   {
-    // if (i == 3)
-    // {
-    //   turnOnStickyFinger();
-    // }
-    // char answer = 'n';
-    // std::cout << "Do you want to move(y/n)? ";
-    // std::cin >> answer;
-    // double okToMove = (answer == 'y') ? true : false;
-    // if (!okToMove)
-    //   return false;
+    if (i == 3)
+    {
+      turnOnStickyFinger();
+    }
+    char answer = 'n';
+    std::cout << "Do you want to move(y/n)? ";
+    std::cin >> answer;
+    double okToMove = (answer == 'y') ? true : false;
+    if (!okToMove)
+      return false;
     if (!m_pSupportArmGroup->execute_trajectory(graspTrajectories_[i]))
     {
       return false;
     }
-    if (i == 2)
-    {
-      char answer = 'n';
-      std::cout << "Do you want to move tool tip down (y/n)? ";
-      std::cin >> answer;
-      double okToMove = (answer == 'y') ? true : false;
-      while (okToMove)
-      {
-        double moveDist = 0.0;
-        double time = 0.0;
-        std::cout << "How much further and time? ";
-        std::cin >> moveDist >> time;
-        if (!compensationLinearMove(moveDist, time))
-        {
-          return false;
-        }
-        std::cout << "Do you want to move tool tip down further (y/n)? ";
-        std::cin >> answer;
-        okToMove = (answer == 'y') ? true : false;
-      }
-    }
+    // if (i == 2)
+    // {
+    //   char answer = 'n';
+    //   std::cout << "Do you want to move tool tip down (y/n)? ";
+    //   std::cin >> answer;
+    //   double okToMove = (answer == 'y') ? true : false;
+    //   while (okToMove)
+    //   {
+    //     double moveDist = 0.0;
+    //     double time = 0.0;
+    //     std::cout << "How much further and time? ";
+    //     std::cin >> moveDist >> time;
+    //     if (!compensationLinearMove(moveDist, time))
+    //     {
+    //       return false;
+    //     }
+    //     std::cout << "Do you want to move tool tip down further (y/n)? ";
+    //     std::cin >> answer;
+    //     okToMove = (answer == 'y') ? true : false;
+    //   }
+    // }
   }
   move_group_->attachObject(needle_name_);
   planning_scene_monitor_->waitForCurrentRobotState(ros::Time::now());
