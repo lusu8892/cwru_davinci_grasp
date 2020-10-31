@@ -56,11 +56,15 @@ struct GraspInfo
   int part_id;
   struct GraspParamInfo
   {
-    int param_0_index;
-    int param_1_index;
-    int param_2_index;
-    int param_3_index;
+    int param_0_index = 0;
+    int param_1_index = 0;
+    int param_2_index = 0;
+    int param_3_index = 0;
     int grasp_id;
+    double param_0;
+    double param_1;
+    double param_2;
+    double param_3;
   };
   GraspParamInfo graspParamInfo;
   double theta_diff_avg;
@@ -78,10 +82,15 @@ struct GraspInfo
 class DavinciSimpleGraspGenerator
 {
 public:
-  DavinciSimpleGraspGenerator(moveit_visual_tools::MoveItVisualToolsPtr visual_tools = nullptr,
-                              bool verbose = false);
+  DavinciSimpleGraspGenerator
+  (
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools = nullptr,
+  bool verbose = false
+  );
 
-  ~DavinciSimpleGraspGenerator();
+  ~DavinciSimpleGraspGenerator
+  (
+  );
 
   /**
    * @brief generate simple possible needle grasps list
@@ -90,12 +99,14 @@ public:
    * @param possible_grasp_msgs
    * @return
    */
-  bool generateSimpleNeedleGrasps(const geometry_msgs::PoseStamped &needle_pose,
-                                  const DavinciNeedleGraspData &needleGraspData,
-                                  std::vector<moveit_msgs::Grasp> &possible_grasp_msgs,
-                                  bool sort);
-
-
+  bool generateSimpleNeedleGrasps
+  (
+  const geometry_msgs::PoseStamped &needle_pose,
+  const DavinciNeedleGraspData &needleGraspData,
+  std::vector<GraspInfo> &possible_grasp_info,
+  std::vector<moveit_msgs::Grasp> &possible_grasp_msgs,
+  bool sort
+  );
 
   /**
    * @brief generate a simple needle grasp with user defined grasping parameters
@@ -104,14 +115,21 @@ public:
    * @param possible_grasps
    * @return
    */
-  bool generateDefinedSimpleNeedleGrasp(const geometry_msgs::PoseStamped &needle_pose,
-                                        const DavinciNeedleGraspData &needleGraspData,
-                                        moveit_msgs::Grasp &possible_grasp_msg,
-                                        GraspInfo &grasp_pose,
-                                        bool has_grasp_pose = false);
+  bool generateDefinedSimpleNeedleGrasp
+  (
+  const geometry_msgs::PoseStamped &needle_pose,
+  const DavinciNeedleGraspData &needleGraspData,
+  moveit_msgs::Grasp &possible_grasp_msg,
+  GraspInfo &grasp_pose,
+  bool has_grasp_pose = false
+  );
 
-  void graspGeneratorHelper(const DavinciNeedleGraspData &needleGraspData,
-                            std::vector<GraspInfo> &grasp_pose, bool sort);
+  void graspGeneratorHelper
+  (
+  const DavinciNeedleGraspData &needleGraspData,
+  std::vector<GraspInfo> &grasp_pose,
+  bool sort
+  );
 private:
 
   // class for publishing stuff to rviz
@@ -123,7 +141,6 @@ private:
   // Transform from frame of needle to global frame(base frame)
   Eigen::Affine3d needle_pose_wrt_base_frame_;
 
-
 //  static trajectory_msgs::JointTrajectory simpleGrasp(const std::vector<std::string> joint_names, float pos, float effort=0);
 
   /**
@@ -132,10 +149,12 @@ private:
    * @param needle_geometry_parameters
    * @return A 4-by-4 matrix represents desired needle pose wrt to gripper frame
    */
-  void calNeedleToGripperPose(const double (&grasping_parameters)[4],
-                              const double &needle_radius,
-                              GraspInfo &grasp_info);
-
+  void calNeedleToGripperPose
+  (
+  const double (&grasping_parameters)[4],
+  const double &needle_radius,
+  GraspInfo &grasp_info
+  );
 
   /**
    * Compute pre-grasping gripper pose w/rt needle frame
@@ -144,9 +163,12 @@ private:
    * @param pose_above_object
    * @return A 4-by-4 matrix represents pre-grasping gripper pose w/rt needle frame
    */
-  static Eigen::Affine3d calPreGraspGripperPose(const double grasping_parameters[],
-                                                const double needle_radius,
-                                                const float pose_above_needle_dist);
+  static Eigen::Affine3d calPreGraspGripperPose
+  (
+  const double grasping_parameters[],
+  const double needle_radius,
+  const float pose_above_needle_dist
+  );
 
 };
 

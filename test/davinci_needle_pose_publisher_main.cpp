@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2019, Case Western Reserve University
+ *  Copyright (c) 2020, Case Western Reserve University
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,44 +32,61 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <cwru_davinci_grasp/davinci_needle_grasper_base.h>
+/* Author: Su Lu <sxl924@case.edu>
+ * Description: A needle pose publisher for testing simple needle grasping.
+ * This node is to publish updated needle pose.
+ */
 
-using namespace cwru_davinci_grasp;
+#include <cwru_davinci_grasp/davinci_needle_pose_publisher.h>
 
-DavinciNeedleGrasperBase::DavinciNeedleGrasperBase
-(
-const ros::NodeHandle &nh_priv,
-const std::string &planning_group_name,
-const std::string &ee_group_name
-)
-: nh_priv_(nh_priv)
+int main(int argc, char** argv)
 {
-  nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
-  nh_priv_.param("ee_group_name", ee_group_name_, ee_group_name);
+  ros::init(argc, argv, "davinci_needle_pose_publisher");
 
-  if (!needleGraspData_.loadRobotGraspData(nh_priv_, ee_group_name_))
+  ros::NodeHandle nh;
+  ros::NodeHandle nhPriv("~");
+  ros::Rate loopRate(2);
+
+  // pubMode == 0: accurate tracking
+  // pubMode == 1: error on camera's z axis
+  // pubMode == 2: error on needle's orientation
+  DummyNeedleTracker * needleTracker = nullptr;
+
+  int pubMode = 0;
+  if (argc == 2)
   {
-    ros::shutdown();
+    pubMode = atoi(argv[1]);
   }
 
-  simpleNeedleGraspGenerator_.reset(new cwru_davinci_grasp::DavinciSimpleGraspGenerator());
-}
+  switch (pubMode)
+  {
+    case 0:
+      needleTracker = new DummyNeedleTracker(nh, nhPriv);
+      break;
+    case 1:
+      needleTracker = new DummyNeedleTrackerWithDepthNoise(nh, nhPriv);
+      break;
+    case 2:
+      needleTracker = new DummyNeedleTrackerWithRotationNoise(nh, nhPriv);
+      break;
+    case 3:
+      needleTracker = new DummyNeedleTrackerWithRandRotNoise(nh, nhPriv);
+      break;
+  }
 
-DavinciNeedleGrasperBase::DavinciNeedleGrasperBase
-(
-const ros::NodeHandle &nh_priv,
-const std::string &planning_group_name
-)
-: nh_priv_(nh_priv)
-{
-  nh_priv_.param("planning_group_name", planning_group_name_, planning_group_name);
-}
+  if (!needleTracker)
+  {
+    ROS_ERROR("davinci_needle_pose_publisher: No needle tracker is instantiated");
+    return 0;
+  }
 
-const std::vector<GraspInfo>& DavinciNeedleGrasperBase::getAllPossibleNeedleGrasps
-(
-bool sort
-)
-{
-  simpleNeedleGraspGenerator_->graspGeneratorHelper(needleGraspData_, possible_grasps_, sort);
-  return possible_grasps_;
+  while (ros::ok())
+  {
+    if (!needleTracker->publishNeedlePose())
+      break;
+    loopRate.sleep();
+  }
+
+  delete needleTracker;
+  return 0;
 }

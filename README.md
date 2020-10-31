@@ -1,63 +1,66 @@
 # cwru_davinci_grasp
-This package is the implementation of object grasp for daVinci surgical robot. With it, robot is able to grasp some objects, needle for instance, and place object to a new location within robot workspace. Both motions of object grasp and placement are solved by MoveIt! motion planner.
+This package is the implementation of needle grasping for the Patient-side manipulators (PSMs) of the da Vinci<sup>&reg;</sup> surgical robot. The needle grasp manipulation path is computed by class [`pick_place::PickPlan`](https://docs.ros.org/kinetic/api/moveit_ros_manipulation/html/classpick__place_1_1PickPlan.html) in MoveIt! library.
 
-The current implementation allows user to either tell robot to grasp a needle with a defined grasping pose or help user to choose a pose within all possible grasping poses. For needle placement, it requires user to define a position vector(x, y, z) with respect to world frame(the global reference frame), the goal location where the needle is going to be placed.
+The current implementation allows user to either control the robot to grasp a needle with a set of defined grasping parameters or help user choose a valid grasp pose within a list of candidates grasp.
 
-This packge includes:
+This package includes:
 
-  - Simple needle grasper (library and main funtion) implementated by MoveIt! motion planner with the use of moveit_msgs/Grasp message.
-  - Simple pose-based grasp generator implementated by optimal needle grasping algorithms.
+  - Simple needle grasper (library and main function) implemented by class [`pick_place::PickPlan`](https://docs.ros.org/kinetic/api/moveit_ros_manipulation/html/classpick__place_1_1PickPlan.html) in MoveIt! library.
+  - Simple pose-based grasp generator implemented by optimal needle grasping algorithms.
   - A needle grasping data processing program.
   - A .yaml needle grasp config file, inside of which the grasping parameters are defined
   - Test code
  
-Developed by [Su Lu](https://github.com/lusu8892/) at the Mercis Lab, Case Western Reserve University.
+Developed by [Su Lu](https://github.com/lusu8892/) at the MeRCIS Lab, Case Western Reserve University.
  
 ## Install
 
-### Ubuntu Debian
+### Ubuntu
 Kinetic:
 ```
-git clone https://github.com/lusu8892/cwru_davinci_grasp
+git clone https://github.com/cwru-davinci/cwru_davinci_grasp
 ```
 
-### Some other packages needed before compiling
+### Dependent packages
 ```
 git clone https://github.com/JenniferBuehler/convenience-pkgs.git
-git clone https://github.com/cwru-robotics/cwru_davinci_moveit.git
+git clone https://github.com/cwru-davinci/cwru_davinci_moveit.git
 ```
 
 ## How to use
-Before use, make sure the updated needle pose is being published to topic "/updated_needle_pose", or remap whatever topic name to this one, the data type should be "geometry_msgs/PoseStamped".
+Before use, make sure the pose information of the needle is being published to the topic "/updated_needle_pose" in the form of "geometry_msgs/PoseStamped" ROS message.
 
 ### To use main function
-To use davinci_simple_needle_grasper_main function, user needs to tell which PSMs(psm_one or psm_two) is going to be used to grasp needle, the needle's name and to pick or place. The default setting is to use psm_one to pick needle_r. The main function will try to pick needle with defined grasping pose, if it fails, then the motion planner will help user to choose a possible one.
+To use davinci_simple_needle_grasper_main function, user needs to specify which PSMs("psm_one" or "psm_two") is going to be used to grasp needle, the needle's name and to pick or place. The default setting is to use "psm_one" to pick the "needle_r". Then the main function will ask user to use which grasp mode to grasp the needle.
 
 To pick up the needle:
 ```
 roslaunch cwru_davinci_grasp davinci_simple_needle_grasp.launch which_arm:=psm_one needle_name:=needle_r movement:=pick
 ```
 
-To place the same needle:
+To place the same needle (Implementation In Progress):
 ```
 roslaunch cwru_davinci_grasp davinci_simple_needle_grasp.launch which_arm:=psm_one needle_name:=needle_r movement:=place
 ```
 
 ### To use code in user's program
-Within your robot's ROS package, add this package to your package.xml, CMakeLists.txt. Then in whatever C++ file add this to your includes:
+Within your ROS project package, add this package to your package.xml, CMakeLists.txt. Then in the C++ implementation file add this to your includes:
 
 ```
 #include <cwru_davinci_grasp/davinci_simple_needle_grasper.h>
 ```
 
-Add to your class's member variables the following:
+Add to your class's member variables and properly initialize it correspondingly:
 ```
+// plain version
 DavinciSimpleNeedleGrasper simpleNeedleGrasper_;
+// or smart pointer version in boost::shared_ptr
+DavinciSimpleNeedleGrasperPtr simpleNeedleGrasperPtr_;
 ```
 
 In your member initialization list of your class constructor:
 ```
-simpleNeedleGrasper_(node_handle, private_node_handle, "psm_one" or "psm_two");
+simpleNeedleGrasper_(node_handle, private_node_handle, "psm_one" or "psm_two", "needle_name");
 ```
 
 To have a private_node_handle, create a ros::NodeHandle initialized with "~", such as:
@@ -65,35 +68,28 @@ To have a private_node_handle, create a ros::NodeHandle initialized with "~", su
 ros::NodeHandle private_node_handle("~");
 ```
 
-To pick up needle, you can either tell robot to grasp needle by defined parameters or to have motion planner decided for you.
+### Modes to grasp the needle
+To pick up needle, you can either control the robot to grasp a needle with a set of defined grasping parameters or have the program find a valid grasp pose for you. There are four grasp modes to choose from, "DEFINED", "SUBOPTIMAL", "FINDGOOD" and "RANDOM".
 
-To change the defined parameters for needle grasp, change theta_normal value in file [dvrk_psm_grasp_needle_data.yaml](https://github.com/lusu8892/cwru_davinci_grasp/blob/master/config/dvrk_psm_grasp_needle_data.yaml)
+To change the defined grasping parameters, change theta_normal value in file [dvrk_psm_grasp_needle_data.yaml](https://github.com/cwru-davinci/cwru_davinci_grasp/blob/master/config/dvrk_psm_grasp_needle_data.yaml)
 ```
 // pick up needle by defined grasping parameters
-simpleNeedleGrasper_.pickNeedle(NeedlePickMode::DEFINED, needle_name);
+simpleNeedleGrasper_.pickNeedle("needle_name", NeedlePickMode::DEFINED);
 
-// or pick up needle by searching through all possible grasping transformations
-simpleNeedleGrasper_.pickNeedle(NeedlePickMode::RANDOM, needle_name);
-```
+// or pick up needle by randomly searching through the list of candidates grasp
+simpleNeedleGrasper_.pickNeedle("needle_name", NeedlePickMode::RANDOM);
 
-To place needle, you need to pass a needle pose goal to placeNeedle() function, The goal pose only requires translation part defined by user, the orientation of needle placement will be decided by motion planner. NOTICE: The goal pose needs to be defined with respect to world frame(the global reference frame). Here is an example:
-```
-geometry_msgs::Pose needle_pose_goal;
+// or pick up needle by sequentially finding the first valid grasp from the pre-sorted list of candidates grasp
+simpleNeedleGrasper_.pickNeedle("needle_name", NeedlePickMode::SUBOPTIMAL);
 
-needle_pose_goal.position.x = -0.248;
-needle_pose_goal.position.y = 0.0;
-needle_pose_goal.position.z = 0.46;
-
-needleGrasper.placeNeedle(needle_pose_goal, needle_name);
+// or pick up needle by sequentially finding the first valid grasp from the unsorted list of candidates grasp
+simpleNeedleGrasper_.pickNeedle("needle_name", NeedlePickMode::FINDGOOD);
 ```
 
 ## TODO
 
-Furture features to be added to this project:
+Future features to be added to this project:
 
- - Needle hand-off ability
-   - Given an initial needle pose and a desired needle grasp pose.
-   - One side gripper is able to pick it up with a grasping pose.
-   - The other side gripper will then take the needle from the first gripper.
-   - The second gripper move the needle to a pose such that the first gripper can grasp the needle with the desired grasp pose.
- - Other objects grasp feature, like surgical thread grasp, tissue grasp.
+ - Provides grasp visualization and GUI for user to explicitly select preferred grasp.
+ - Considers the interaction between the gripper tip and soft tissue to minimize intrusion.
+ - Finishes the place functionality.
